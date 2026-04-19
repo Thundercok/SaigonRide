@@ -1,0 +1,42 @@
+﻿@page
+@model SaigonRide.App.Pages.IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 fw-bold text-warning">Chào mừng đến với Đế Chế Mixi88!</h1>
+    <p class="lead">Project vui vẻ - Code khỏe mượt mà - Chuyên trị API VNPay & PayPal.</p>
+</div>
+
+<div class="row mt-5 justify-content-center">
+    <div class="col-md-5 mb-4">
+        <div class="card border-primary h-100">
+            <div class="card-header bg-primary text-white fw-bold">
+                Cổng VNPay (Hệ VNĐ)
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Nạp 100,000 VNĐ</h5>
+                <p class="card-text">Bấm vào đây để test luồng chuyển hướng sang VNPay.</p>
+                <form method="post" asp-page-handler="VNPay">
+                    <button type="submit" class="btn btn-primary w-100">🚀 Nạp qua VNPay</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5 mb-4">
+        <div class="card border-info h-100">
+            <div class="card-header bg-info text-dark fw-bold">
+                Cổng PayPal (Hệ Tư Bản)
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Nạp $10.00</h5>
+                <p class="card-text">Bấm vào đây để test luồng PayPal.</p>
+                <form method="post" asp-page-handler="PayPal">
+                    <button type="submit" class="btn btn-info text-dark w-100">💸 Nạp qua PayPal</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

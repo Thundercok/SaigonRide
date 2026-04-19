@@ -1,0 +1,9 @@
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/rpswa.dswa.cache.json
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.GeneratedMSBuildEditorConfig.editorconfig
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.AssemblyInfoInputs.cache
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.AssemblyInfo.cs
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.csproj.CoreCompileInputs.cache
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.MvcApplicationPartsAssemblyInfo.cache
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.RazorAssemblyInfo.cache
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.RazorAssemblyInfo.cs
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/obj/Debug/net10.0/SaigonRide.App.sourcelink.json
