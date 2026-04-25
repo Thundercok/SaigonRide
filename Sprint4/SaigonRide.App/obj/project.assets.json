@@ -4417,11 +4417,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/thundercock2/Documents/Github/SoftwareEngineering2026/LAB3/Home/SaigonRide/SaigonRide.App/SaigonRide.App.csproj",
+      "projectUniqueName": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
       "projectName": "SaigonRide.App",
-      "projectPath": "/Users/thundercock2/Documents/Github/SoftwareEngineering2026/LAB3/Home/SaigonRide/SaigonRide.App/SaigonRide.App.csproj",
+      "projectPath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
       "packagesPath": "/Users/thundercock2/.nuget/packages/",
-      "outputPath": "/Users/thundercock2/Documents/Github/SoftwareEngineering2026/LAB3/Home/SaigonRide/SaigonRide.App/obj/",
+      "outputPath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/thundercock2/.nuget/NuGet/NuGet.Config"

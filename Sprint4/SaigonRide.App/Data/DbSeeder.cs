@@ -48,18 +48,18 @@ namespace SaigonRide.App.Data
                         Name = "Wave Electric Alpha", 
                         LicensePlate = "11-11 111111", 
                         Grade = VehicleGrade.GradeA, 
-                        MarketValue = 1500m, 
-                        HourlyRate = 5m, 
-                        DailyRate = 40m 
+                        MarketValue = 1500000m,
+                        HourlyRate = 15000m,
+                        DailyRate = 100000m
                     },
                     new Vehicle 
                     { 
                         Name = "Super Electric Dream", 
                         LicensePlate = "11-11 11112", 
                         Grade = VehicleGrade.GradeB, 
-                        MarketValue = 1200m, 
-                        HourlyRate = 4m, 
-                        DailyRate = 30m 
+                        MarketValue = 1200000m,
+                        HourlyRate = 12000m,
+                        DailyRate = 80000m
                     }
                 );
                 await context.SaveChangesAsync();

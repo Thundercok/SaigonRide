@@ -12,8 +12,7 @@ namespace SaigonRide.App.Models.Entities
         public decimal Amount { get; set; }
         
         // Lifecycle of the deposit
-        public DepositStatus Status { get; set; } = DepositStatus.Held;
-
+        public DepositStatus Status { get; set; } = DepositStatus.Pending;
         // Audit trail for examiners/admin dashboard
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ProcessedAt { get; set; } // When it was refunded or forfeited
@@ -22,5 +21,5 @@ namespace SaigonRide.App.Models.Entities
         public string? Note { get; set; }
     }
 
-    public enum DepositStatus { Held, Refunded, Forfeited }
+    public enum DepositStatus { Pending, Held, Refunded, Forfeited }
 }

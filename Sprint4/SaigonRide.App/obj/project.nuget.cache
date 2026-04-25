@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bRMNeG4iI6A=",
+  "dgSpecHash": "4tya6cHpW5M=",
   "success": true,
-  "projectFilePath": "/Users/thundercock2/Documents/Github/SoftwareEngineering2026/LAB3/Home/SaigonRide/SaigonRide.App/SaigonRide.App.csproj",
+  "projectFilePath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
   "expectedPackageFiles": [
     "/Users/thundercock2/.nuget/packages/azure.core/1.47.1/azure.core.1.47.1.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/azure.identity/1.14.2/azure.identity.1.14.2.nupkg.sha512",
