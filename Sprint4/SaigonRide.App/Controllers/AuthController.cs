@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Models.ViewModels;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SaigonRide.App.Controllers
 {
@@ -11,41 +15,80 @@ namespace SaigonRide.App.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _config;
 
-        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        // Added IConfiguration to the constructor parameters
+        public AuthController(
+            SignInManager<ApplicationUser> signInManager, 
+            UserManager<ApplicationUser> userManager,
+            IConfiguration config)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _config = config;
         }
 
-        // POST: api/auth/login
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            var user = new ApplicationUser
+            {
+                UserName = request.Email,
+                Email = request.Email,
+                FullName = request.FullName,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+                return BadRequest(new { Errors = result.Errors.Select(e => e.Description) });
+
+            return Ok(new { Message = "Registered successfully.", UserId = user.Id });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // 1. Find the user by email
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
-            {
                 return Unauthorized(new { Message = "Invalid email or password." });
-            }
 
-            // 2. Attempt to sign in (false means we don't want a persistent cookie right now)
-            var result = await _signInManager.PasswordSignInAsync(user.UserName!, request.Password, isPersistent: false, lockoutOnFailure: false);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
+            if (!result.Succeeded)
+                return Unauthorized(new { Message = "Invalid email or password." });
 
-            if (result.Succeeded)
+            // Ensure your appsettings.json has a "JwtSettings" section
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var keyString = jwtSettings["Key"];
+            
+            if (string.IsNullOrEmpty(keyString))
+                throw new InvalidOperationException("JWT Key is not configured.");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
             {
-                // In a full mobile app, you would generate a JWT (JSON Web Token) here.
-                // For now, we just confirm the login was successful and return the user data.
-                return Ok(new 
-                { 
-                    Message = "Login successful!", 
-                    UserId = user.Id,
-                    FullName = user.FullName,
-                    Email = user.Email
-                });
-            }
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Name, user.FullName ?? "")
+            };
 
-            return Unauthorized(new { Message = "Invalid email or password." });
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiresInMinutes"] ?? "60")),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Expires = token.ValidTo,
+                UserId = user.Id,
+                FullName = user.FullName
+            });
         }
     }
 }

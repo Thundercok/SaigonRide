@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,11 +37,32 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
+// --- JWT Authentication ---
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+        };
+    });
 
 // --- 3. Custom Services Registration ---
 // Registered here so Controllers can inject it
 builder.Services.AddScoped<VNPayService>(); 
 builder.Services.AddScoped<SepayService>();
+builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
 // --- 4. MVC & Controllers ---
 builder.Services.AddControllersWithViews();
 

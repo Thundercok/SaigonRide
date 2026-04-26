@@ -16,10 +16,9 @@ namespace SaigonRide.App.Models.Entities
         // Audit trail for examiners/admin dashboard
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ProcessedAt { get; set; } // When it was refunded or forfeited
-        
         // Optional: Admin notes if a deposit is forfeited (e.g., "Scratched mirror")
         public string? Note { get; set; }
     }
 
-    public enum DepositStatus { Pending, Held, Refunded, Forfeited }
+    public enum DepositStatus { Pending, Held, Refunded, Forfeited, Cancelled }
 }

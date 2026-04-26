@@ -32,8 +32,8 @@ namespace SaigonRide.App.Controllers
 
             // 1. One active/pending rental limit per user
             var hasActiveRental = await _context.Rentals
-                .AnyAsync(r => r.UserId == userId && 
-                              (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending));
+                .AnyAsync(r => r.UserId == userId &&
+                               (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending));
 
             if (hasActiveRental)
                 return BadRequest(new { Message = "You already have an active or pending rental." });
@@ -41,8 +41,15 @@ namespace SaigonRide.App.Controllers
             // 2. Availability check
             var vehicle = await _context.Vehicles.FindAsync(request.VehicleId);
             if (vehicle == null) return NotFound(new { Message = "Vehicle not found." });
-            if (vehicle.Status != VehicleStatus.Available || !vehicle.IsActive)
+            // Double booking guard
+            if (!vehicle.IsActive || vehicle.Status == VehicleStatus.Maintenance || vehicle.Status == VehicleStatus.OutOfService)
                 return BadRequest(new { Message = "Vehicle is not available for rent." });
+
+            var vehicleOccupied = await _context.Rentals
+                .AnyAsync(r => r.VehicleId == request.VehicleId &&
+                               (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending));
+            if (vehicleOccupied)
+                return BadRequest(new { Message = "Vehicle is currently unavailable." });
 
             // 3. Calculate Deposit based on Grade
             decimal depositPercentage = vehicle.Grade switch
@@ -78,10 +85,10 @@ namespace SaigonRide.App.Controllers
 
                 _context.Rentals.Add(newRental);
                 _context.Deposits.Add(newDeposit);
-                
+
                 // We keep the vehicle as Available (or a special 'Pending' state) 
                 // until payment is confirmed to prevent "locking" bikes with failed payments.
-                
+
                 await _context.SaveChangesAsync();
 
                 // 4. Generate the VietQR Image URL via SepayService
@@ -116,8 +123,8 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
-            
-            if (rental == null || rental.UserId != userId) 
+
+            if (rental == null || rental.UserId != userId)
                 return NotFound(new { Message = "Rental record not found." });
 
             if (rental.Status != RentalStatus.Active)
@@ -133,7 +140,7 @@ namespace SaigonRide.App.Controllers
                 if (rental.Mode == RentalMode.Hourly)
                 {
                     var billedHours = (decimal)Math.Ceiling(duration.TotalHours);
-                    if (billedHours < 1) billedHours = 1; 
+                    if (billedHours < 1) billedHours = 1;
                     totalCost = billedHours * rental.Vehicle.HourlyRate;
                 }
                 else
