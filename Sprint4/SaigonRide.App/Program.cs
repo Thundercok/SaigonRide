@@ -16,14 +16,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                       ?? builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? throw new InvalidOperationException("No connection string found.");
 
-    // Convert Railway postgres URL to Npgsql format
-    var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':');
-    var npgsqlConn = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    string connStr;
+    if (databaseUrl.StartsWith("postgresql://") || databaseUrl.StartsWith("postgres://"))
+    {
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':', 2); // limit 2 phòng password có dấu ':'
+        connStr = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port == -1 ? 5432 : uri.Port,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            Username = userInfo[0],
+            Password = userInfo.Length > 1 ? userInfo[1] : "",
+            SslMode = Npgsql.SslMode.Require,
+            TrustServerCertificate = true
+        }.ConnectionString;
+    }
+    else
+    {
+        connStr = databaseUrl; // đã là key=value format
+    }
 
-    options.UseNpgsql(npgsqlConn);
+    options.UseNpgsql(connStr);
 });
-
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // --- 2. Identity & Security Configuration ---
