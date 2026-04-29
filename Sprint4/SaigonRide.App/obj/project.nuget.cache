@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "k0NDY6fdXiI=",
+  "dgSpecHash": "KddcDfZtfg4=",
   "success": true,
   "projectFilePath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
   "expectedPackageFiles": [
@@ -17,7 +17,7 @@
     "/Users/thundercock2/.nuget/packages/microsoft.build.framework/17.14.28/microsoft.build.framework.17.14.28.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/microsoft.build.tasks.core/17.14.28/microsoft.build.tasks.core.17.14.28.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/microsoft.build.utilities.core/17.14.28/microsoft.build.utilities.core.17.14.28.nupkg.sha512",
-    "/Users/thundercock2/.nuget/packages/microsoft.codeanalysis.analyzers/3.11.0/microsoft.codeanalysis.analyzers.3.11.0.nupkg.sha512",
+    "/Users/thundercock2/.nuget/packages/microsoft.codeanalysis.analyzers/5.3.0/microsoft.codeanalysis.analyzers.5.3.0.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/microsoft.codeanalysis.common/4.14.0/microsoft.codeanalysis.common.4.14.0.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/microsoft.codeanalysis.csharp/4.14.0/microsoft.codeanalysis.csharp.4.14.0.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/microsoft.codeanalysis.csharp.workspaces/4.14.0/microsoft.codeanalysis.csharp.workspaces.4.14.0.nupkg.sha512",

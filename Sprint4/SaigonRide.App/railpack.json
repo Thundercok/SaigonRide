@@ -1,0 +1,5 @@
+{
+  "build": {
+    "cmd": "dotnet publish -c Release -o out"
+  }
+}
