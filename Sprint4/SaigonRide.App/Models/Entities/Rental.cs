@@ -4,25 +4,21 @@ namespace SaigonRide.App.Models.Entities
     {
         public int Id { get; set; }
 
-        // Foreign Keys linking the User and the E-Bike
         public string UserId { get; set; } = string.Empty;
         public virtual ApplicationUser User { get; set; } = null!;
 
         public int VehicleId { get; set; }
         public virtual Vehicle Vehicle { get; set; } = null!;
 
-        // Time tracking
-        public DateTime StartTime { get; set; } = DateTime.UtcNow;
+        // Thay đổi: Cho phép null để hỗ trợ trạng thái Pending
+        public DateTime? StartTime { get; set; } 
         public DateTime? EndTime { get; set; }
 
-        // Pricing & Billing
-        public RentalMode Mode { get; set; } // Hourly or Daily
-        public decimal TotalCost { get; set; } // Calculated at the end of the trip
+        public RentalMode Mode { get; set; }
+        public decimal TotalCost { get; set; }
 
-        // Status tracking
         public RentalStatus Status { get; set; } = RentalStatus.Pending;
 
-        // Navigation property: One rental has one deposit record
         public virtual Deposit? Deposit { get; set; }
     }
 

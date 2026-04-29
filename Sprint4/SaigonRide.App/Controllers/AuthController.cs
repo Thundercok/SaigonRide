@@ -4,6 +4,7 @@ using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Models.ViewModels;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
@@ -89,6 +90,39 @@ namespace SaigonRide.App.Controllers
                 UserId = user.Id,
                 FullName = user.FullName
             });
+        }[HttpPost("kiosk-token")]
+        [AllowAnonymous]
+        public async Task<IActionResult> KioskToken()
+        {
+            var email = _config["KioskCredentials:Email"];
+            var password = _config["KioskCredentials:Password"];
+
+            var user = await _userManager.FindByEmailAsync(email!);
+            if (user == null) return Unauthorized();
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, password!, lockoutOnFailure: false);
+            if (!result.Succeeded) return Unauthorized();
+
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email!),
+                new Claim(ClaimTypes.Name, user.FullName ?? "")
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: creds
+            );
+
+            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
     }
 }

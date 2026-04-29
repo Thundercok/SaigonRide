@@ -1,0 +1,64 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Bán Vé - SaigonRide Metro</title>
+    <link rel="stylesheet" href="~/css/swiss-design.css" />
+</head>
+<body>
+<div class="kiosk-container">
+        
+    <div class="info-panel">
+        <div class="brand-header">SAIGONRIDE / METRO KIOSK</div>
+        <h1 class="vehicle-title">VinFast Klara S</h1>
+            
+        <div class="specs">
+            <div class="spec-row">
+                <span class="spec-label">Biển số:</span>
+                <span class="spec-value">59-M1 123.45</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-label">Hạng xe:</span>
+                <span class="spec-value">Grade A</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-label">Phí cọc (20%):</span>
+                <span class="spec-value highlight">2.000.000 VNĐ</span>
+            </div>
+        </div>
+
+        <button id="btnStartRental" class="action-btn">MỞ KHÓA & THANH TOÁN</button>
+        <p id="systemMessage" class="system-msg"></p>
+    </div>
+
+    <div class="payment-panel">
+        <div id="paymentState_Idle" class="state-idle">
+            <h2>CHỌN MỞ KHÓA ĐỂ TẠO MÃ</h2>
+        </div>
+
+        <div id="paymentState_Active" class="state-active" style="display: none;">
+            <h2>QUÉT MÃ VIETQR ĐỂ ĐẶT CỌC</h2>
+            <div class="qr-wrapper">
+                <img id="qrImage" src="" alt="Mã VietQR" />
+            </div>
+            <div class="timer-box">
+                <span>Mã hết hạn sau: </span>
+                <span id="countdownTimer" class="timer-text">15:00</span>
+            </div>
+            <p class="instruction-text">Mở ứng dụng ngân hàng và quét mã trên để nhận xe.</p>
+        </div>
+    </div>
+
+</div>
+<div id="paymentState_Success" style="display:none;">
+    <p>✅ Thanh toán thành công! Xe đang được mở khoá...</p>
+</div>
+
+    <script src="~/js/kiosk-app.js"></script>
+</body>
+</html>

@@ -753,3 +753,5 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/SaigonRide.App.genruntimeconfig.cache
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/ref/SaigonRide.App.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-apw49i6fz0-apw49i6fz0.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/6njzjlc6sh-{0}-tdyed5ozbf-tdyed5ozbf.gz

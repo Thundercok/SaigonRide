@@ -38,6 +38,27 @@ namespace SaigonRide.App.Data
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }
+            // 3. Seed Kiosk System Account
+            string[] kioskRoles = { "Admin", "Customer", "Kiosk" };
+            foreach (var role in kioskRoles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
+
+            if (await userManager.FindByEmailAsync("kiosk@saigonride.com") == null)
+            {
+                var kioskUser = new ApplicationUser
+                {
+                    UserName = "kiosk@saigonride.com",
+                    Email = "kiosk@saigonride.com",
+                    FullName = "Kiosk System",
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(kioskUser, "Kiosk@Internal99!");
+                if (result.Succeeded)
+                    await userManager.AddToRoleAsync(kioskUser, "Kiosk");
+            }
 
             // 3. Seed Initial E-Bikes for the UI
             if (!context.Vehicles.Any())

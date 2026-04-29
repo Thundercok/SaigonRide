@@ -15,9 +15,9 @@ namespace SaigonRide.App.Controllers
     public class RentalsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly SepayService _sepayService; // 1. Đổi sang SepayService
+        private readonly SepayService _sepayService;
 
-        public RentalsController(AppDbContext context, SepayService sepayService) // 2. Inject SepayService
+        public RentalsController(AppDbContext context, SepayService sepayService)
         {
             _context = context;
             _sepayService = sepayService;
@@ -40,7 +40,9 @@ namespace SaigonRide.App.Controllers
 
             // 2. Availability check
             var vehicle = await _context.Vehicles.FindAsync(request.VehicleId);
-            if (vehicle == null) return NotFound(new { Message = "Vehicle not found." });
+            if (vehicle == null) 
+                return NotFound(new { Message = "Vehicle not found." });
+            
             // Double booking guard
             if (!vehicle.IsActive || vehicle.Status == VehicleStatus.Maintenance || vehicle.Status == VehicleStatus.OutOfService)
                 return BadRequest(new { Message = "Vehicle is not available for rent." });
@@ -65,14 +67,13 @@ namespace SaigonRide.App.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Create Rental in PENDING status
+                // Create Rental in PENDING status - NO StartTime yet
                 var newRental = new Rental
                 {
                     UserId = userId,
                     VehicleId = vehicle.Id,
-                    StartTime = DateTime.UtcNow,
                     Mode = (RentalMode)request.Mode,
-                    Status = RentalStatus.Pending // Industry Standard: Start as Pending
+                    Status = RentalStatus.Pending
                 };
 
                 var newDeposit = new Deposit
@@ -86,13 +87,9 @@ namespace SaigonRide.App.Controllers
                 _context.Rentals.Add(newRental);
                 _context.Deposits.Add(newDeposit);
 
-                // We keep the vehicle as Available (or a special 'Pending' state) 
-                // until payment is confirmed to prevent "locking" bikes with failed payments.
-
                 await _context.SaveChangesAsync();
 
                 // 4. Generate the VietQR Image URL via SepayService
-                // Đưa amount và ID vào để sinh mã QR tĩnh chuẩn bị hiển thị trên Kiosk
                 string qrImageUrl = _sepayService.GenerateQrUrl(calculatedDeposit, newRental.Id);
 
                 await transaction.CommitAsync();
@@ -101,7 +98,7 @@ namespace SaigonRide.App.Controllers
                 {
                     Message = "Rental initiated. Please scan the QR code on the screen to pay the deposit.",
                     RentalId = newRental.Id,
-                    QrUrl = qrImageUrl, // 3. Trả về QrUrl thay vì PaymentUrl
+                    QrUrl = qrImageUrl, 
                     DepositAmount = calculatedDeposit
                 });
             }
@@ -130,11 +127,15 @@ namespace SaigonRide.App.Controllers
             if (rental.Status != RentalStatus.Active)
                 return BadRequest(new { Message = "This rental is not currently active." });
 
+            // Guard: Đảm bảo chuyến đi đã thực sự bắt đầu
+            if (!rental.StartTime.HasValue)
+                return BadRequest(new { Message = "Rental has not started yet." });
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 rental.EndTime = DateTime.UtcNow;
-                var duration = rental.EndTime.Value - rental.StartTime;
+                var duration = rental.EndTime.Value - rental.StartTime.Value; // An toàn truy cập .Value
 
                 decimal totalCost = 0;
                 if (rental.Mode == RentalMode.Hourly)
@@ -189,12 +190,13 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
                 .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.StartTime)
+                .OrderByDescending(r => r.Id) // Thay vì Order theo StartTime vì StartTime có thể null
                 .Select(r => new RentalHistoryViewModel
                 {
                     RentalId = r.Id,
                     VehicleName = r.Vehicle.Name,
-                    StartTime = r.StartTime.ToString("yyyy-MM-dd HH:mm"),
+                    // Check null an toàn cho StartTime
+                    StartTime = r.StartTime.HasValue ? r.StartTime.Value.ToString("yyyy-MM-dd HH:mm") : "Pending",
                     EndTime = r.EndTime.HasValue ? r.EndTime.Value.ToString("yyyy-MM-dd HH:mm") : "Ongoing",
                     Status = r.Status.ToString(),
                     TotalCost = r.TotalCost,
@@ -203,6 +205,37 @@ namespace SaigonRide.App.Controllers
                 .ToListAsync();
 
             return Ok(history);
+        }
+
+        // DELETE: api/rentals/{id}/cancel
+        [HttpDelete("{id}/cancel")]
+        public async Task<IActionResult> CancelRental(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var rental = await _context.Rentals
+                .Include(r => r.Deposit)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (rental == null) 
+                return NotFound(new { Message = "Rental not found." });
+            
+            if (rental.UserId != userId) 
+                return Forbid();
+            
+            if (rental.Status != RentalStatus.Pending)
+                return BadRequest(new { Message = "Only pending rentals can be cancelled." });
+
+            rental.Status = RentalStatus.Cancelled;
+            if (rental.Deposit != null)
+            {
+                rental.Deposit.Status = DepositStatus.Cancelled;
+                rental.Deposit.ProcessedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Rental cancelled." });
         }
     }
 }
