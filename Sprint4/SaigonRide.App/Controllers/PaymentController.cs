@@ -1,3 +1,4 @@
+using System.Security.Claims; 
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -49,8 +50,9 @@ namespace SaigonRide.App.Controllers
             if (rental.Status != RentalStatus.Pending)
                 return Ok(new { message = "Ignored: rental already processed" });
 
-            if (payload.transferAmount < rental.TotalAmount)
-                return Ok(new { message = $"Ignored: insufficient amount ({payload.transferAmount} < {rental.TotalAmount})" });
+            // Đã đổi thành TotalCost để khớp với Rental.cs
+            if (payload.transferAmount < rental.TotalCost)
+                return Ok(new { message = $"Ignored: insufficient amount ({payload.transferAmount} < {rental.TotalCost})" });
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -140,7 +142,9 @@ namespace SaigonRide.App.Controllers
                 return Redirect("/Home/Error?reason=db_error");
             }
         }
-        // GET: api/rentals/{id}/status
+
+        // ─── STATUS CHECK ─────────────────────────────────────────────────────────
+
         [HttpGet("{id}/status")]
         public async Task<IActionResult> GetRentalStatus(int id)
         {
@@ -153,6 +157,7 @@ namespace SaigonRide.App.Controllers
                 .FirstOrDefaultAsync();
 
             if (rental == null) return NotFound();
+            
             return Ok(new { status = rental.Status.ToString() });
         }
 

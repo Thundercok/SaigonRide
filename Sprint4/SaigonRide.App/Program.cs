@@ -1,33 +1,31 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. Database Configuration ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.")));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // --- 2. Identity & Security Configuration ---
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => 
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false; 
+        options.SignIn.RequireConfirmedAccount = false;
         options.Password.RequireDigit = false;
         options.Password.RequireNonAlphanumeric = false;
     })
-    .AddRoles<IdentityRole>() 
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
-// IMPORTANT: Configure cookies AFTER Identity but BEFORE builder.Build()
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Events.OnRedirectToLogin = context =>
@@ -36,6 +34,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
+
 // --- JWT Authentication ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication(options =>
@@ -58,10 +57,10 @@ builder.Services.AddAuthentication(options =>
     });
 
 // --- 3. Custom Services Registration ---
-// Registered here so Controllers can inject it
-builder.Services.AddScoped<VNPayService>(); 
+builder.Services.AddScoped<VNPayService>();
 builder.Services.AddScoped<SepayService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
+
 // --- 4. MVC & Controllers ---
 builder.Services.AddControllersWithViews();
 
@@ -83,7 +82,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -91,24 +90,26 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-// --- 6. Database Seeding ---
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        await DbSeeder.SeedDataAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the DB.");
-    }
-}
+// --- 6. Database Migration & Seeding ---
+// Migrate trước để đảm bảo schema sẵn sàng
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+}
+
+// Seed data sau khi đã có bảng
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        await DbSeeder.SeedDataAsync(scope.ServiceProvider);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
 }
 
 app.Run();

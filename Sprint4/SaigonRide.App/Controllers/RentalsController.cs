@@ -15,15 +15,15 @@ namespace SaigonRide.App.Controllers
     public class RentalsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly SepayService _sepayService;
+        private readonly SepayService _sepayService; 
 
-        public RentalsController(AppDbContext context, SepayService sepayService)
+        public RentalsController(AppDbContext context, SepayService sepayService) 
         {
             _context = context;
             _sepayService = sepayService;
         }
 
-        // POST: api/rentals/start
+        // ─── START RENTAL ──────────────────────────────────────────────────────────
         [HttpPost("start")]
         public async Task<IActionResult> StartRental([FromBody] RentalRequest request)
         {
@@ -40,11 +40,10 @@ namespace SaigonRide.App.Controllers
 
             // 2. Availability check
             var vehicle = await _context.Vehicles.FindAsync(request.VehicleId);
-            if (vehicle == null) 
-                return NotFound(new { Message = "Vehicle not found." });
+            if (vehicle == null) return NotFound(new { Message = "Vehicle not found." });
             
-            // Double booking guard
-            if (!vehicle.IsActive || vehicle.Status == VehicleStatus.Maintenance || vehicle.Status == VehicleStatus.OutOfService)
+            if (!vehicle.IsActive || vehicle.Status == VehicleStatus.Maintenance ||
+                vehicle.Status == VehicleStatus.OutOfService)
                 return BadRequest(new { Message = "Vehicle is not available for rent." });
 
             var vehicleOccupied = await _context.Rentals
@@ -67,13 +66,13 @@ namespace SaigonRide.App.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Create Rental in PENDING status - NO StartTime yet
+                // Create Rental in PENDING status. NO StartTime yet!
                 var newRental = new Rental
                 {
                     UserId = userId,
                     VehicleId = vehicle.Id,
                     Mode = (RentalMode)request.Mode,
-                    Status = RentalStatus.Pending
+                    Status = RentalStatus.Pending 
                 };
 
                 var newDeposit = new Deposit
@@ -86,7 +85,6 @@ namespace SaigonRide.App.Controllers
 
                 _context.Rentals.Add(newRental);
                 _context.Deposits.Add(newDeposit);
-
                 await _context.SaveChangesAsync();
 
                 // 4. Generate the VietQR Image URL via SepayService
@@ -109,7 +107,24 @@ namespace SaigonRide.App.Controllers
             }
         }
 
-        // POST: api/rentals/return/{rentalId}
+        // ─── STATUS FOR KIOSK POLLING ─────────────────────────────────────────────
+        [HttpGet("{id}/status")]
+        public async Task<IActionResult> GetRentalStatus(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var rental = await _context.Rentals
+                .Where(r => r.Id == id && r.UserId == userId)
+                .Select(r => new { r.Id, r.Status })
+                .FirstOrDefaultAsync();
+
+            if (rental == null) return NotFound();
+            
+            return Ok(new { status = rental.Status.ToString() });
+        }
+
+        // ─── RETURN RENTAL ────────────────────────────────────────────────────────
         [HttpPost("return/{rentalId}")]
         public async Task<IActionResult> ReturnRental(int rentalId)
         {
@@ -127,15 +142,14 @@ namespace SaigonRide.App.Controllers
             if (rental.Status != RentalStatus.Active)
                 return BadRequest(new { Message = "This rental is not currently active." });
 
-            // Guard: Đảm bảo chuyến đi đã thực sự bắt đầu
-            if (!rental.StartTime.HasValue)
+            if (rental.StartTime == null)
                 return BadRequest(new { Message = "Rental has not started yet." });
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 rental.EndTime = DateTime.UtcNow;
-                var duration = rental.EndTime.Value - rental.StartTime.Value; // An toàn truy cập .Value
+                var duration = rental.EndTime.Value - rental.StartTime.Value;
 
                 decimal totalCost = 0;
                 if (rental.Mode == RentalMode.Hourly)
@@ -179,7 +193,7 @@ namespace SaigonRide.App.Controllers
             }
         }
 
-        // GET: api/rentals/history
+        // ─── RENTAL HISTORY ───────────────────────────────────────────────────────
         [HttpGet("history")]
         public async Task<IActionResult> GetHistory()
         {
@@ -190,12 +204,11 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
                 .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.Id) // Thay vì Order theo StartTime vì StartTime có thể null
+                .OrderByDescending(r => r.Id) 
                 .Select(r => new RentalHistoryViewModel
                 {
                     RentalId = r.Id,
                     VehicleName = r.Vehicle.Name,
-                    // Check null an toàn cho StartTime
                     StartTime = r.StartTime.HasValue ? r.StartTime.Value.ToString("yyyy-MM-dd HH:mm") : "Pending",
                     EndTime = r.EndTime.HasValue ? r.EndTime.Value.ToString("yyyy-MM-dd HH:mm") : "Ongoing",
                     Status = r.Status.ToString(),
@@ -207,7 +220,7 @@ namespace SaigonRide.App.Controllers
             return Ok(history);
         }
 
-        // DELETE: api/rentals/{id}/cancel
+        // ─── CANCEL PENDING RENTAL ────────────────────────────────────────────────
         [HttpDelete("{id}/cancel")]
         public async Task<IActionResult> CancelRental(int id)
         {
@@ -218,12 +231,8 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Deposit)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
-            if (rental == null) 
-                return NotFound(new { Message = "Rental not found." });
-            
-            if (rental.UserId != userId) 
-                return Forbid();
-            
+            if (rental == null) return NotFound(new { Message = "Rental not found." });
+            if (rental.UserId != userId) return Forbid();
             if (rental.Status != RentalStatus.Pending)
                 return BadRequest(new { Message = "Only pending rentals can be cancelled." });
 
