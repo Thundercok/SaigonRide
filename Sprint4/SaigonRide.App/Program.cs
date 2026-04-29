@@ -93,14 +93,15 @@ builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
 // --- 5. HTTP Pipeline (Middleware) ---
-if (app.Environment.IsDevelopment())
-{
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseMigrationsEndPoint();
+//}
+//else
+//{
+//    app.UseExceptionHandler("/Home/Error");
+//}
+app.UseDeveloperExceptionPage();
 
 app.UseStaticFiles();
 app.UseRouting();
