@@ -17,7 +17,7 @@ namespace SaigonRide.App.Services
         {
             // Các thông tin cố định (bạn có thể đưa BankId và AccountName vào appsettings sau nếu thích)
             string bankId = "bidv"; 
-            string accountNumber = _config["Sepay:AccountNumber"] ?? "6930313231";
+            string accountNumber = _config["Sepay:AccountNumber"] ?? "96247WXZRR";
             string accountName = "BUI LE THUY QUYNH"; 
             string template = "compact2"; // Layout chuẩn, đẹp cho Kiosk
             
