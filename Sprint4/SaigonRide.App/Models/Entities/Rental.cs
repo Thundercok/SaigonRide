@@ -9,7 +9,12 @@ namespace SaigonRide.App.Models.Entities
 
         public int VehicleId { get; set; }
         public virtual Vehicle Vehicle { get; set; } = null!;
+        
+        public int StartStationId { get; set; }
+        public virtual Station StartStation { get; set; } = null!;
 
+        public int? EndStationId { get; set; }
+        public virtual Station? EndStation { get; set; }
         // Thay đổi: Cho phép null để hỗ trợ trạng thái Pending
         public DateTime? StartTime { get; set; } 
         public DateTime? EndTime { get; set; }

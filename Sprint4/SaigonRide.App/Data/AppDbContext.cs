@@ -14,32 +14,59 @@ namespace SaigonRide.App.Data
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Rental> Rentals { get; set; }
         public DbSet<Deposit> Deposits { get; set; }
-
+        
+        public DbSet<Station> Stations { get; set; }
+        public DbSet<StationUtilisationLog> StationUtilisationLogs { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // CRITICAL: Must call the base method first so Identity tables are configured
-            base.OnModelCreating(builder); 
+            base.OnModelCreating(builder);
 
-            // 1-to-1: A Rental has exactly one Deposit
             builder.Entity<Rental>()
                 .HasOne(r => r.Deposit)
                 .WithOne(d => d.Rental)
                 .HasForeignKey<Deposit>(d => d.RentalId)
-                .OnDelete(DeleteBehavior.Cascade); // If rental is deleted, delete the deposit record
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // 1-to-Many: User to Rentals
             builder.Entity<Rental>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Rentals)
                 .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting a user if they have active rentals
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // 1-to-Many: Vehicle to Rentals
             builder.Entity<Rental>()
                 .HasOne(r => r.Vehicle)
                 .WithMany(v => v.Rentals)
                 .HasForeignKey(r => r.VehicleId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting an e-bike if it has rental history
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Vehicle>()
+                .HasOne(v => v.Station)
+                .WithMany(s => s.Vehicles)
+                .HasForeignKey(v => v.StationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Rental>()
+                .HasOne(r => r.StartStation)
+                .WithMany(s => s.StartRentals)
+                .HasForeignKey(r => r.StartStationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Rental>()
+                .HasOne(r => r.EndStation)
+                .WithMany(s => s.EndRentals)
+                .HasForeignKey(r => r.EndStationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<StationUtilisationLog>()
+                .HasOne(l => l.Station)
+                .WithMany(s => s.UtilisationLogs)
+                .HasForeignKey(l => l.StationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StationUtilisationLog>()
+                .HasIndex(l => new { l.StationId, l.HourSlot })
+                .IsUnique();
         }
     }
 }

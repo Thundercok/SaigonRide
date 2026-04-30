@@ -31,11 +31,11 @@ namespace SaigonRide.App.Controllers
                 return Unauthorized(new { message = "Invalid or missing API key" });
 
             if (payload.transferType != "in")
-                return Ok(new { message = "Ignored: outgoing transfer" });
+                return Ok(new { success = true, message = "Ignored: outgoing transfer" });
 
             var match = Regex.Match(payload.content, @"\bSGR\s+(\d+)\b", RegexOptions.IgnoreCase);
             if (!match.Success)
-                return Ok(new { message = "Ignored: no valid SGR code in content" });
+                return Ok(new { success = true, message = "Ignored: no valid SGR code in content" });
 
             int rentalId = int.Parse(match.Groups[1].Value);
 
@@ -45,14 +45,10 @@ namespace SaigonRide.App.Controllers
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
 
             if (rental == null)
-                return Ok(new { message = $"Ignored: rental {rentalId} not found" });
+                return Ok(new { success = true, message = $"Ignored: rental {rentalId} not found" });
 
             if (rental.Status != RentalStatus.Pending)
-                return Ok(new { message = "Ignored: rental already processed" });
-
-            // Đã đổi thành TotalCost để khớp với Rental.cs
-            if (payload.transferAmount < rental.TotalCost)
-                return Ok(new { message = $"Ignored: insufficient amount ({payload.transferAmount} < {rental.TotalCost})" });
+                return Ok(new { success = true, message = "Ignored: rental already processed" });
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -71,12 +67,12 @@ namespace SaigonRide.App.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(new { message = "Payment confirmed. Rental is now active.", rentalId });
+                return Ok(new { success = true, message = "Payment confirmed. Rental is now active.", rentalId });
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Database error", error = ex.Message });
+                return StatusCode(500, new { success = false, message = "Database error", error = ex.Message });
             }
         }
 

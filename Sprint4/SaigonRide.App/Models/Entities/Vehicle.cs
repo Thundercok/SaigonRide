@@ -16,7 +16,8 @@ namespace SaigonRide.App.Models.Entities
         
         public bool IsActive { get; set; } = true;
         public VehicleStatus Status { get; set; } = VehicleStatus.Available;
-
+        public int? StationId { get; set; }
+        public virtual Station? Station { get; set; }
         public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     }
 
