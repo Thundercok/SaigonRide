@@ -29,7 +29,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             Username = userInfo[0],
             Password = userInfo.Length > 1 ? userInfo[1] : "",
             SslMode = Npgsql.SslMode.Require,
-            TrustServerCertificate = true
         }.ConnectionString;
     }
     else
@@ -114,7 +113,7 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 // --- 6. Database Migration & Seeding ---
-// Migrate trước để đảm bảo schema sẵn sàng
+// Migrate để đảm bảo schema sẵn sàng
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

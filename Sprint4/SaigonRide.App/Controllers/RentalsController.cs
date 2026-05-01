@@ -15,9 +15,9 @@ namespace SaigonRide.App.Controllers
     public class RentalsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly SepayService _sepayService; 
+        private readonly SepayService _sepayService;
 
-        public RentalsController(AppDbContext context, SepayService sepayService) 
+        public RentalsController(AppDbContext context, SepayService sepayService)
         {
             _context = context;
             _sepayService = sepayService;
@@ -41,7 +41,11 @@ namespace SaigonRide.App.Controllers
             // 2. Availability check
             var vehicle = await _context.Vehicles.FindAsync(request.VehicleId);
             if (vehicle == null) return NotFound(new { Message = "Vehicle not found." });
-            
+
+            // Robust Fix: Ensure the vehicle is actually at a station before renting
+            if (!vehicle.StationId.HasValue)
+                return BadRequest(new { Message = "Vehicle location error: This vehicle is not currently assigned to a station." });
+
             if (!vehicle.IsActive || vehicle.Status == VehicleStatus.Maintenance ||
                 vehicle.Status == VehicleStatus.OutOfService)
                 return BadRequest(new { Message = "Vehicle is not available for rent." });
@@ -66,13 +70,15 @@ namespace SaigonRide.App.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Create Rental in PENDING status. NO StartTime yet!
+                // Robust Fix: Use .Value safely since we checked .HasValue above.
+                // Also handles request.Mode if it arrives as null from the frontend.
                 var newRental = new Rental
                 {
                     UserId = userId,
                     VehicleId = vehicle.Id,
-                    Mode = (RentalMode)request.Mode,
-                    Status = RentalStatus.Pending 
+                    Mode = request.Mode,
+                    Status = RentalStatus.Pending,
+                    StartStationId = vehicle.StationId.Value 
                 };
 
                 var newDeposit = new Deposit
@@ -96,7 +102,7 @@ namespace SaigonRide.App.Controllers
                 {
                     Message = "Rental initiated. Please scan the QR code on the screen to pay the deposit.",
                     RentalId = newRental.Id,
-                    QrUrl = qrImageUrl, 
+                    QrUrl = qrImageUrl,
                     DepositAmount = calculatedDeposit
                 });
             }
@@ -120,7 +126,7 @@ namespace SaigonRide.App.Controllers
                 .FirstOrDefaultAsync();
 
             if (rental == null) return NotFound();
-            
+
             return Ok(new { status = rental.Status.ToString() });
         }
 
@@ -204,7 +210,7 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
                 .Where(r => r.UserId == userId)
-                .OrderByDescending(r => r.Id) 
+                .OrderByDescending(r => r.Id)
                 .Select(r => new RentalHistoryViewModel
                 {
                     RentalId = r.Id,
