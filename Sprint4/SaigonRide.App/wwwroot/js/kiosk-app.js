@@ -1,34 +1,185 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const btnStartRental = document.getElementById('btnStartRental');
-    const systemMessage = document.getElementById('systemMessage');
-    const stateIdle = document.getElementById('paymentState_Idle');
-    const stateActive = document.getElementById('paymentState_Active');
-    const stateSuccess = document.getElementById('paymentState_Success');
-    const qrImage = document.getElementById('qrImage');
-    const countdownTimer = document.getElementById('countdownTimer');
 
-    let timerInterval = null;
-    let pollingInterval = null;
-    let kioskToken = null;
-    let currentRentalId = null;
+    // ── State Machine Core ────────────────────────────────────────────────────
+    const STATES = [
+        'Splash', 'PhoneInput', 'OtpInput', 'AuthSuccess',
+        'VehicleSelect', 'DepositInfo', 'Idle', 'Active',
+        'Success', 'ReturnScan', 'ReturnProcessing', 'ReturnReceipt',
+        'Error'
+    ];
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
-    try {
-        const res = await fetch('/api/auth/kiosk-token', { method: 'POST' });
-        const data = await res.json();
-        kioskToken = data.token;
-    } catch {
-        systemMessage.innerText = "Lỗi kết nối hệ thống. Vui lòng liên hệ kỹ thuật viên.";
-        btnStartRental.disabled = true;
+    function goToState(name, payload = {}) {
+        document.querySelectorAll('.state-container').forEach(el => el.style.display = 'none');
+        const el = document.getElementById('paymentState_' + name);
+        if (!el) { console.error('Missing state div: paymentState_' + name); return; }
+        el.style.display = 'flex';
+        currentState = name;
+        onEnter[name]?.(payload);
     }
 
-    // ── Start Rental ──────────────────────────────────────────────────────────
-    btnStartRental.addEventListener('click', async () => {
-        if (!kioskToken) return;
+    let currentState = null;
 
-        btnStartRental.disabled = true;
-        btnStartRental.innerText = "ĐANG TẠO MÃ...";
-        systemMessage.innerText = "";
+    // ── Runtime State ─────────────────────────────────────────────────────────
+    let kioskToken    = null;
+    let userToken     = null;
+    let currentRentalId = null;
+    let timerInterval = null;
+    let pollingInterval = null;
+    let otpPhone      = null;
+
+    // ── Element Refs ──────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    // ── State Entry Handlers ──────────────────────────────────────────────────
+    const onEnter = {
+
+        Splash: () => {
+            $('btnTouchToStart')?.addEventListener('click', () => goToState('PhoneInput'), { once: true });
+        },
+
+        PhoneInput: () => {
+            $('phoneInput').value = '';
+            $('phoneError').textContent = '';
+            $('btnSubmitPhone')?.addEventListener('click', async () => {
+                const phone = $('phoneInput').value.trim();
+                if (!phone.match(/^(0|\+84)\d{9}$/)) {
+                    $('phoneError').textContent = 'Số điện thoại không hợp lệ.';
+                    return;
+                }
+                otpPhone = phone;
+                try {
+                    await fetch('/api/auth/send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone })
+                    });
+                    goToState('OtpInput');
+                } catch {
+                    $('phoneError').textContent = 'Không thể gửi OTP. Thử lại.';
+                }
+            }, { once: true });
+        },
+
+        OtpInput: () => {
+            $('otpError').textContent = '';
+            $('btnSubmitOtp')?.addEventListener('click', async () => {
+                const otp = $('otpInput').value.trim();
+                try {
+                    const res = await fetch('/api/auth/verify-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: otpPhone, otp })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        userToken = data.token;
+                        goToState('AuthSuccess', { userName: data.userName });
+                    } else {
+                        $('otpError').textContent = data.message || 'Mã OTP sai. Thử lại.';
+                    }
+                } catch {
+                    $('otpError').textContent = 'Lỗi kết nối.';
+                }
+            }, { once: true });
+        },
+
+        AuthSuccess: ({ userName } = {}) => {
+            if ($('authUserName')) $('authUserName').textContent = userName ?? '';
+            setTimeout(() => goToState('VehicleSelect'), 2000);
+        },
+
+        VehicleSelect: () => {
+            document.querySelectorAll('.vehicle-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const vehicleId = parseInt(btn.dataset.vehicleId);
+                    goToState('DepositInfo', { vehicleId });
+                }, { once: true });
+            });
+        },
+
+        DepositInfo: ({ vehicleId } = {}) => {
+            // Store selected vehicle for rental start
+            window._selectedVehicleId = vehicleId;
+            $('btnConfirmDeposit')?.addEventListener('click', () => goToState('Idle'), { once: true });
+        },
+
+        // ── Original Idle → Active → Success flow, preserved ─────────────────
+        Idle: () => {
+            $('systemMessage').textContent = '';
+            $('btnStartRental').disabled = false;
+            $('btnStartRental').textContent = 'TẠO MÃ VIETQR';
+            $('btnStartRental')?.addEventListener('click', handleStartRental, { once: true });
+        },
+
+        Active: ({ qrUrl, rentalId } = {}) => {
+            $('qrImage').src = qrUrl ?? '';
+            startCountdown(900);
+            startPolling(rentalId);
+            $('btnCancelRental')?.addEventListener('click', () => {
+                stopAll();
+                goToState('Idle');
+            }, { once: true });
+        },
+
+        Success: ({ vehicleId, dockId } = {}) => {
+            if ($('assignedVehicleId')) $('assignedVehicleId').textContent = vehicleId ?? 'N/A';
+            if ($('assignedDockId'))   $('assignedDockId').textContent   = dockId   ?? 'N/A';
+            setTimeout(() => goToState('Splash'), 30000); // reset after 30s
+            $('btnDone')?.addEventListener('click', () => goToState('Splash'), { once: true });
+        },
+
+        ReturnScan: () => {
+            $('bikeIdInput').value = '';
+            $('returnError').textContent = '';
+            $('btnSubmitReturn')?.addEventListener('click', async () => {
+                const bikeCode = $('bikeIdInput').value.trim();
+                if (!bikeCode) { $('returnError').textContent = 'Nhập mã xe.'; return; }
+                try {
+                    const res = await fetch('/api/rentals/return', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userToken}`
+                        },
+                        body: JSON.stringify({ bikeCode })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        goToState('ReturnProcessing', { rentalId: data.rentalId });
+                    } else {
+                        $('returnError').textContent = data.message || 'Không tìm thấy xe.';
+                    }
+                } catch {
+                    $('returnError').textContent = 'Lỗi kết nối.';
+                }
+            }, { once: true });
+        },
+
+        ReturnProcessing: ({ rentalId } = {}) => {
+            pollReturnStatus(rentalId);
+        },
+
+        ReturnReceipt: ({ summary } = {}) => {
+            if ($('receiptBaseFare'))     $('receiptBaseFare').textContent     = fmt(summary?.baseFare);
+            if ($('receiptDiscount'))     $('receiptDiscount').textContent     = fmt(summary?.discount);
+            if ($('receiptFinalFare'))    $('receiptFinalFare').textContent    = fmt(summary?.finalFare);
+            if ($('receiptDepositNote'))  $('receiptDepositNote').textContent  = summary?.depositNote ?? '';
+            setTimeout(() => goToState('Splash'), 30000);
+            $('btnReceiptDone')?.addEventListener('click', () => goToState('Splash'), { once: true });
+        },
+
+        Error: ({ message } = {}) => {
+            if ($('errorMessage')) $('errorMessage').textContent = message ?? 'Đã xảy ra lỗi.';
+            setTimeout(() => goToState('Splash'), 10000);
+            $('btnErrorRetry')?.addEventListener('click', () => goToState('Splash'), { once: true });
+        }
+    };
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
+    async function handleStartRental() {
+        if (!kioskToken) return;
+        $('btnStartRental').disabled = true;
+        $('btnStartRental').textContent = 'ĐANG TẠO MÃ...';
 
         try {
             const res = await fetch('/api/rentals/start', {
@@ -37,28 +188,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${kioskToken}`
                 },
-                body: JSON.stringify({ vehicleId: 1, mode: 0 })
+                body: JSON.stringify({ vehicleId: window._selectedVehicleId ?? 1, mode: 0 })
             });
-
             const data = await res.json();
 
             if (res.ok) {
                 currentRentalId = data.rentalId;
-                stateIdle.style.display = 'none';
-                stateActive.style.display = 'block';
-                qrImage.src = data.qrUrl;
-                startCountdown(900);
-                startPolling(data.rentalId);
-                btnStartRental.innerText = "ĐÃ TẠO MÃ THANH TOÁN";
+                goToState('Active', { qrUrl: data.qrUrl, rentalId: data.rentalId });
             } else {
-                systemMessage.innerText = data.message || "Lỗi hệ thống.";
-                resetButton();
+                $('systemMessage').textContent = data.message || 'Lỗi hệ thống.';
+                goToState('Idle');
             }
         } catch {
-            systemMessage.innerText = "Không thể kết nối máy chủ.";
-            resetButton();
+            goToState('Error', { message: 'Không thể kết nối máy chủ.' });
         }
-    });
+    }
 
     // ── Polling ───────────────────────────────────────────────────────────────
     function startPolling(rentalId) {
@@ -68,75 +212,75 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { 'Authorization': `Bearer ${kioskToken}` }
                 });
                 if (!res.ok) return;
-
                 const data = await res.json();
 
                 if (data.status === 'Active') {
                     stopAll();
-                    showSuccess();
+                    goToState('Success', { vehicleId: data.vehicleCode, dockId: data.dockId });
                 } else if (data.status === 'Cancelled') {
                     stopAll();
-                    showExpired("Giao dịch đã bị huỷ.");
+                    goToState('Error', { message: 'Giao dịch đã bị huỷ.' });
                 }
-            } catch {
-                // silent — keep polling
+            } catch { /* silent */ }
+        }, 3000);
+    }
+
+    function pollReturnStatus(rentalId) {
+        let attempts = 0;
+        const interval = setInterval(async () => {
+            attempts++;
+            try {
+                const res = await fetch(`/api/rentals/${rentalId}/return-status`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.status === 'Completed') {
+                    clearInterval(interval);
+                    goToState('ReturnReceipt', { summary: data.summary });
+                }
+            } catch { /* silent */ }
+
+            if (attempts > 20) { // 60s timeout
+                clearInterval(interval);
+                goToState('Error', { message: 'Trả xe quá thời gian. Liên hệ kỹ thuật viên.' });
             }
         }, 3000);
     }
 
     // ── Countdown ─────────────────────────────────────────────────────────────
     function startCountdown(seconds) {
-        let timer = seconds;
         clearInterval(timerInterval);
-
+        let timer = seconds;
         timerInterval = setInterval(() => {
-            const m = String(Math.floor(timer / 60)).padStart(2, '0');
-            const s = String(timer % 60).padStart(2, '0');
-            countdownTimer.textContent = `${m}:${s}`;
-
+            const el = $('countdownTimer');
+            if (el) el.textContent = `${String(Math.floor(timer / 60)).padStart(2,'0')}:${String(timer % 60).padStart(2,'0')}`;
             if (--timer < 0) {
                 stopAll();
-                showExpired("Phiên giao dịch đã hết hạn. Vui lòng thử lại.");
+                goToState('Error', { message: 'Phiên giao dịch đã hết hạn. Vui lòng thử lại.' });
             }
         }, 1000);
-    }
-
-    // ── UI States ─────────────────────────────────────────────────────────────
-    function showSuccess() {
-        stateActive.style.display = 'none';
-        if (stateSuccess) stateSuccess.style.display = 'block';
-        // Auto-reset về Idle sau 5 giây
-        setTimeout(() => resetToIdle(), 5000);
-    }
-
-    function showExpired(msg) {
-        qrImage.style.opacity = '0.2';
-        countdownTimer.textContent = "HẾT HẠN";
-        systemMessage.innerText = msg;
-        resetButton();
-        setTimeout(() => resetToIdle(), 5000);
-    }
-
-    function resetToIdle() {
-        stateActive.style.display = 'none';
-        if (stateSuccess) stateSuccess.style.display = 'none';
-        stateIdle.style.display = 'block';
-        qrImage.src = '';
-        qrImage.style.opacity = '1';
-        systemMessage.innerText = '';
-        currentRentalId = null;
-        resetButton();
-    }
-
-    function resetButton() {
-        btnStartRental.disabled = false;
-        btnStartRental.innerText = "BẮT ĐẦU THUÊ XE";
     }
 
     function stopAll() {
         clearInterval(timerInterval);
         clearInterval(pollingInterval);
-        timerInterval = null;
-        pollingInterval = null;
+        timerInterval = pollingInterval = null;
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    const fmt = n => n != null ? n.toLocaleString('vi-VN') + ' VNĐ' : 'N/A';
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    try {
+        const res = await fetch('/api/auth/kiosk-token', { method: 'POST' });
+        const data = await res.json();
+        kioskToken = data.token;
+    } catch {
+        goToState('Error', { message: 'Lỗi kết nối hệ thống. Vui lòng liên hệ kỹ thuật viên.' });
+        return;
+    }
+
+    goToState('Splash');
 });

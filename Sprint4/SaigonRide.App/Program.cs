@@ -8,14 +8,14 @@ using SaigonRide.App.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddMemoryCache();
 // --- 1. Database Configuration ---
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+                      ?? builder.Configuration["DATABASE_URL"]
                       ?? builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? throw new InvalidOperationException("No connection string found.");
-
     string connStr;
     if (databaseUrl.StartsWith("postgresql://") || databaseUrl.StartsWith("postgres://"))
     {
@@ -82,10 +82,9 @@ builder.Services.AddAuthentication(options =>
     });
 
 // --- 3. Custom Services Registration ---
-builder.Services.AddScoped<VNPayService>();
 builder.Services.AddScoped<SepayService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
-
+builder.Services.AddHostedService<StationUtilisationWorker>();
 // --- 4. MVC & Controllers ---
 builder.Services.AddControllersWithViews();
 

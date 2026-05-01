@@ -1,70 +1,311 @@
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiosk Bán Vé - SaigonRide Metro</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1280" />
+    <title>SaigonRide Kiosk</title>
     <link rel="stylesheet" href="~/css/swiss-design.css" />
 </head>
+
 <body>
-<div class="kiosk-container">
-        
-    <div class="info-panel">
-        <div class="brand-header">SAIGONRIDE / METRO KIOSK</div>
-        <h1 class="vehicle-title">VinFast Klara S</h1>
-            
-        <div class="specs">
-            <div class="spec-row">
-                <span class="spec-label">Biển số:</span>
-                <span class="spec-value">59-M1 123.45</span>
+    <div class="kiosk-container">
+
+        <!-- Left Panel -->
+        <div class="info-panel">
+            <div class="brand-header">
+                <span class="logo-icon">🚇</span> SAIGONRIDE
             </div>
-            <div class="spec-row">
-                <span class="spec-label">Hạng xe:</span>
-                <span class="spec-value">Grade A</span>
+            <div class="location-context">
+                <span class="hub-label">Ben Thanh Hub</span>
+                <span class="status-badge">Station ID: BT-001</span>
             </div>
-            <div class="spec-row">
-                <span class="spec-label">Phí cọc (20%):</span>
-                <span class="spec-value highlight">2.000.000 VNĐ</span>
+            <div class="vehicle-details">
+                <h1 class="vehicle-title">VinFast Klara S</h1>
+                <div class="specs">
+                    <div class="spec-row">
+                        <span class="spec-label">Hạng xe</span>
+                        <span class="spec-value">Grade A</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Phí cọc (20%)</span>
+                        <span class="spec-value highlight">2.000.000 VNĐ</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <button id="btnStartRental" class="action-btn">MỞ KHÓA & THANH TOÁN</button>
-        <p id="systemMessage" class="system-msg"></p>
-    </div>
+        <!-- Right Panel: All States -->
+        <div class="payment-panel">
 
-    <div class="payment-panel">
-        <div id="paymentState_Idle" class="state-idle">
-            <h2>CHỌN MỞ KHÓA ĐỂ TẠO MÃ</h2>
-        </div>
-
-        <div id="paymentState_Active" class="state-active" style="display: none;">
-            <h2>QUÉT MÃ VIETQR ĐỂ ĐẶT CỌC</h2>
-            <div class="qr-wrapper">
-                <img id="qrImage" src="" alt="Mã VietQR" />
+            <!-- ══ 1. SPLASH ══════════════════════════════════════════════════ -->
+            <div id="paymentState_Splash" class="state-container" style="display:none;">
+                <div class="splash-logo">
+                    <span class="logo-icon-lg">🚇</span>
+                    <h1 class="splash-brand">SAIGONRIDE</h1>
+                </div>
+                <button id="btnTouchToStart" class="action-btn btn-primary btn-xl">
+                    CHẠM ĐỂ BẮT ĐẦU
+                </button>
+                <p class="splash-hint">Liên hệ hỗ trợ: 1800 000 000</p>
             </div>
-            <div class="timer-box">
-                <span>Mã hết hạn sau: </span>
-                <span id="countdownTimer" class="timer-text">15:00</span>
+
+            <!-- ══ 2. PHONE INPUT ══════════════════════════════════════════════ -->
+            <div id="paymentState_PhoneInput" class="state-container" style="display:none;">
+                <h2 class="section-title">Nhập Số Điện Thoại</h2>
+                <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP để xác thực</p>
+                <div class="input-group">
+                    <input id="phoneInput" class="kiosk-input" type="tel"
+                           placeholder="0901 234 567" maxlength="11" inputmode="numeric" />
+                    <p id="phoneError" class="error-msg"></p>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-key" data-target="phoneInput" data-val="1">1</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="2">2</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="3">3</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="4">4</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="5">5</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="6">6</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="7">7</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="8">8</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="9">9</button>
+                    <button class="numpad-key numpad-clear" data-target="phoneInput" data-val="clear">C</button>
+                    <button class="numpad-key" data-target="phoneInput" data-val="0">0</button>
+                    <button class="numpad-key numpad-back" data-target="phoneInput" data-val="back">⌫</button>
+                </div>
+                <button id="btnSubmitPhone" class="action-btn btn-primary" style="margin-top:24px;">
+                    GỬI MÃ OTP →
+                </button>
             </div>
-            <p class="instruction-text">Mở ứng dụng ngân hàng và quét mã trên để nhận xe.</p>
-        </div>
-    </div>
 
-</div>
-<div id="paymentState_Success" style="display:none;">
-    <p>✅ Thanh toán thành công! Xe đang được mở khoá...</p>
-</div>
+            <!-- ══ 3. OTP INPUT ════════════════════════════════════════════════ -->
+            <div id="paymentState_OtpInput" class="state-container" style="display:none;">
+                <h2 class="section-title">Nhập Mã OTP</h2>
+                <p class="section-subtitle">Mã 6 chữ số đã được gửi tới số điện thoại của bạn</p>
+                <div class="input-group">
+                    <input id="otpInput" class="kiosk-input kiosk-input--otp" type="text"
+                           placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" />
+                    <p id="otpError" class="error-msg"></p>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-key" data-target="otpInput" data-val="1">1</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="2">2</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="3">3</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="4">4</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="5">5</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="6">6</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="7">7</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="8">8</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="9">9</button>
+                    <button class="numpad-key numpad-clear" data-target="otpInput" data-val="clear">C</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="0">0</button>
+                    <button class="numpad-key numpad-back" data-target="otpInput" data-val="back">⌫</button>
+                </div>
+                <button id="btnSubmitOtp" class="action-btn btn-primary" style="margin-top:24px;">
+                    XÁC NHẬN →
+                </button>
+            </div>
 
-<script src="~/js/kiosk-app.js"></script>
+            <!-- ══ 4. AUTH SUCCESS ════════════════════════════════════════════ -->
+            <div id="paymentState_AuthSuccess" class="state-container" style="display:none;">
+                <div class="success-icon-wrapper">
+                    <svg class="success-svg" viewBox="0 0 52 52">
+                        <circle class="success-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="success-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                <h2 class="success-title">Xác Thực Thành Công!</h2>
+                <p class="success-subtitle">Chào mừng, <span id="authUserName" class="highlight-name"></span></p>
+                <p class="auto-advance-hint">Đang chuyển hướng...</p>
+            </div>
+
+            <!-- ══ 5. VEHICLE SELECT ══════════════════════════════════════════ -->
+            <div id="paymentState_VehicleSelect" class="state-container" style="display:none;">
+                <h2 class="section-title">Chọn Loại Xe</h2>
+                <p class="section-subtitle">Chọn loại xe phù hợp với hành trình của bạn</p>
+                <div class="vehicle-option-list">
+                    <button class="vehicle-option-btn" data-vehicle-id="1">
+                        <span class="vehicle-icon">🚲</span>
+                        <div class="vehicle-option-info">
+                            <span class="vehicle-option-name">Standard Bike</span>
+                            <span class="vehicle-option-desc">Grade C — Phí cọc: 200.000 VNĐ</span>
+                        </div>
+                        <span class="vehicle-option-arrow">→</span>
+                    </button>
+                    <button class="vehicle-option-btn" data-vehicle-id="2">
+                        <span class="vehicle-icon">⚡</span>
+                        <div class="vehicle-option-info">
+                            <span class="vehicle-option-name">E-Scooter</span>
+                            <span class="vehicle-option-desc">Grade B — Phí cọc: 500.000 VNĐ</span>
+                        </div>
+                        <span class="vehicle-option-arrow">→</span>
+                    </button>
+                    <button class="vehicle-option-btn" data-vehicle-id="3">
+                        <span class="vehicle-icon">🛵</span>
+                        <div class="vehicle-option-info">
+                            <span class="vehicle-option-name">VinFast Klara S</span>
+                            <span class="vehicle-option-desc">Grade A — Phí cọc: 2.000.000 VNĐ</span>
+                        </div>
+                        <span class="vehicle-option-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══ 6. DEPOSIT INFO ════════════════════════════════════════════ -->
+            <div id="paymentState_DepositInfo" class="state-container" style="display:none;">
+                <h2 class="section-title">Thông Tin Đặt Cọc</h2>
+                <div class="deposit-summary">
+                    <div class="deposit-row">
+                        <span class="deposit-label">Phí thuê xe / giờ</span>
+                        <span class="deposit-value">50.000 VNĐ</span>
+                    </div>
+                    <div class="deposit-row">
+                        <span class="deposit-label">Phí đặt cọc (20%)</span>
+                        <span class="deposit-value highlight">2.000.000 VNĐ</span>
+                    </div>
+                    <div class="deposit-divider"></div>
+                    <div class="deposit-row deposit-row--note">
+                        <span class="deposit-note">
+                            Tiền cọc sẽ được hoàn trả sau khi trả xe thành công, 
+                            trừ đi phí thuê thực tế.
+                        </span>
+                    </div>
+                </div>
+                <button id="btnConfirmDeposit" class="action-btn btn-primary">
+                    TIẾP THEO — THANH TOÁN CỌC →
+                </button>
+            </div>
+
+            <!-- ══ 7. IDLE (QR Generate) ══════════════════════════════════════ -->
+            <div id="paymentState_Idle" class="state-container">
+                <h2 class="section-title">Chọn Mở Khóa Để Tạo Mã</h2>
+                <button id="btnStartRental" class="action-btn btn-primary">TẠO MÃ VIETQR</button>
+                <p id="systemMessage" class="system-msg"></p>
+            </div>
+
+            <!-- ══ 8. ACTIVE (QR Display) ═════════════════════════════════════ -->
+            <div id="paymentState_Active" class="state-container" style="display:none;">
+                <h2 class="section-title">Quét Mã Để Đặt Cọc</h2>
+                <div class="qr-wrapper">
+                    <img id="qrImage" src="" alt="Mã VietQR" />
+                </div>
+                <div class="timer-box">
+                    <span>Mã hết hạn sau: </span>
+                    <span id="countdownTimer" class="timer-text">15:00</span>
+                </div>
+                <button id="btnCancelRental" class="action-btn btn-secondary">Hủy Giao Dịch</button>
+            </div>
+
+            <!-- ══ 9. SUCCESS (Payment + Unlock) ═════════════════════════════ -->
+            <div id="paymentState_Success" class="state-container" style="display:none;">
+                <div class="success-icon-wrapper">
+                    <svg class="success-svg" viewBox="0 0 52 52">
+                        <circle class="success-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="success-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                <h2 class="success-title">Thanh toán thành công!</h2>
+                <p class="success-subtitle">Xe đã được mở khóa</p>
+                <div class="assignment-cards">
+                    <div class="data-card">
+                        <span class="card-label">XE ĐƯỢC CHỈ ĐỊNH</span>
+                        <span class="card-value" id="assignedVehicleId">Bike #042</span>
+                    </div>
+                    <div class="data-card alert-card">
+                        <span class="card-label">VỊ TRÍ DOCK</span>
+                        <span class="card-value" id="assignedDockId">Dock 3</span>
+                        <span class="card-subtext">Kéo mạnh tay lái về sau để lấy xe</span>
+                    </div>
+                </div>
+                <button id="btnDone" class="action-btn btn-primary" style="margin-top:40px;">
+                    HOÀN TẤT
+                </button>
+            </div>
+
+            <!-- ══ 10. RETURN SCAN ════════════════════════════════════════════ -->
+            <div id="paymentState_ReturnScan" class="state-container" style="display:none;">
+                <h2 class="section-title">Trả Xe</h2>
+                <p class="section-subtitle">Nhập mã xe hoặc quét barcode trên xe</p>
+                <div class="input-group">
+                    <input id="bikeIdInput" class="kiosk-input" type="text"
+                           placeholder="VD: BK-042" maxlength="10" />
+                    <p id="returnError" class="error-msg"></p>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="1">1</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="2">2</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="3">3</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="4">4</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="5">5</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="6">6</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="7">7</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="8">8</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="9">9</button>
+                    <button class="numpad-key numpad-clear" data-target="bikeIdInput" data-val="clear">C</button>
+                    <button class="numpad-key" data-target="bikeIdInput" data-val="0">0</button>
+                    <button class="numpad-key numpad-back" data-target="bikeIdInput" data-val="back">⌫</button>
+                </div>
+                <button id="btnSubmitReturn" class="action-btn btn-primary" style="margin-top:24px;">
+                    XÁC NHẬN TRẢ XE →
+                </button>
+            </div>
+
+            <!-- ══ 11. RETURN PROCESSING ══════════════════════════════════════ -->
+            <div id="paymentState_ReturnProcessing" class="state-container" style="display:none;">
+                <div class="spinner-wrapper">
+                    <div class="kiosk-spinner"></div>
+                </div>
+                <h2 class="section-title">Đang Xử Lý Trả Xe...</h2>
+                <p class="section-subtitle">Đang kiểm tra tình trạng xe và tính phí.<br>Vui lòng chờ trong giây lát.</p>
+            </div>
+
+            <!-- ══ 12. RETURN RECEIPT ═════════════════════════════════════════ -->
+            <div id="paymentState_ReturnReceipt" class="state-container" style="display:none;">
+                <div class="success-icon-wrapper">
+                    <svg class="success-svg" viewBox="0 0 52 52">
+                        <circle class="success-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="success-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                <h2 class="success-title">Ride Completed!</h2>
+                <div class="receipt-card">
+                    <div class="receipt-row">
+                        <span class="receipt-label">Phí cơ bản</span>
+                        <span class="receipt-value" id="receiptBaseFare">—</span>
+                    </div>
+                    <div class="receipt-row receipt-row--discount">
+                        <span class="receipt-label">Giảm giá thành viên</span>
+                        <span class="receipt-value" id="receiptDiscount">—</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-row receipt-row--total">
+                        <span class="receipt-label">Phí thực tế</span>
+                        <span class="receipt-value" id="receiptFinalFare">—</span>
+                    </div>
+                    <div class="receipt-row receipt-row--note">
+                        <span id="receiptDepositNote" class="receipt-note"></span>
+                    </div>
+                </div>
+                <button id="btnReceiptDone" class="action-btn btn-primary" style="margin-top:32px;">
+                    HOÀN TẤT →
+                </button>
+            </div>
+
+            <!-- ══ 13. ERROR ══════════════════════════════════════════════════ -->
+            <div id="paymentState_Error" class="state-container" style="display:none;">
+                <div class="error-icon">⚠</div>
+                <h2 class="error-title">Đã Xảy Ra Lỗi</h2>
+                <p id="errorMessage" class="error-body">Vui lòng thử lại hoặc liên hệ kỹ thuật viên.</p>
+                <button id="btnErrorRetry" class="action-btn btn-secondary">
+                    THỬ LẠI
+                </button>
+                <p class="support-hint">Hỗ trợ kỹ thuật: 1800 000 000</p>
+            </div>
+
+        </div><!-- /payment-panel -->
+    </div><!-- /kiosk-container -->
+
+    <script src="~/js/kiosk-app.js"></script>
 </body>
-<div id="paymentState_Success" style="display:none;">
-    <div style="text-align:center; padding: 40px;">
-        <h2>✅ THANH TOÁN THÀNH CÔNG</h2>
-        <p>Xe đang được mở khoá. Chúc bạn có chuyến đi vui vẻ!</p>
-    </div>
-</div>
-</html>
