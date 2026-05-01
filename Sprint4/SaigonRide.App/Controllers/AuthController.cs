@@ -7,6 +7,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.EntityFrameworkCore;
 
 namespace SaigonRide.App.Controllers
 {
@@ -19,86 +21,16 @@ namespace SaigonRide.App.Controllers
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
 
-// Add to constructor:
-public AuthController(
-    SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager,
-    IConfiguration config,
-    IMemoryCache cache)
-{
-    _signInManager = signInManager;
-    _userManager = userManager;
-    _config = config;
-    _cache = cache;
-}
-
-[HttpPost("send-otp")]
-[AllowAnonymous]
-public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
-{
-    var user = await _userManager.Users
-        .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
-
-    if (user == null)
-        return NotFound(new { message = "Số điện thoại chưa được đăng ký." });
-
-    var otp = new Random().Next(100000, 999999).ToString();
-    _cache.Set($"otp:{request.Phone}", otp, TimeSpan.FromMinutes(5));
-
-    // TODO: replace with ESMS/Twilio in production
-    Console.WriteLine($"[OTP] {request.Phone} → {otp}");
-
-    return Ok(new { message = "OTP đã được gửi." });
-}
-
-[HttpPost("verify-otp")]
-[AllowAnonymous]
-public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
-{
-    if (!_cache.TryGetValue($"otp:{request.Phone}", out string? storedOtp) || storedOtp != request.Otp)
-        return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
-
-    _cache.Remove($"otp:{request.Phone}");
-
-    var user = await _userManager.Users
-        .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
-
-    if (user == null) return Unauthorized();
-
-    var jwtSettings = _config.GetSection("JwtSettings");
-    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-    var claims = new[]
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(ClaimTypes.Email, user.Email ?? ""),
-        new Claim(ClaimTypes.Name, user.FullName ?? "")
-    };
-
-    var token = new JwtSecurityToken(
-        issuer: jwtSettings["Issuer"],
-        audience: jwtSettings["Audience"],
-        claims: claims,
-        expires: DateTime.UtcNow.AddHours(2),
-        signingCredentials: creds
-    );
-
-    return Ok(new
-    {
-        token = new JwtSecurityTokenHandler().WriteToken(token),
-        userName = user.FullName
-    });
-}
-        // Added IConfiguration to the constructor parameters
         public AuthController(
-            SignInManager<ApplicationUser> signInManager, 
+            SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            IConfiguration config)
+            IConfiguration config,
+            IMemoryCache cache)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _config = config;
+            _cache = cache;
         }
 
         [HttpPost("register")]
@@ -130,10 +62,8 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
             if (!result.Succeeded)
                 return Unauthorized(new { Message = "Invalid email or password." });
 
-            // Ensure your appsettings.json has a "JwtSettings" section
             var jwtSettings = _config.GetSection("JwtSettings");
             var keyString = jwtSettings["Key"];
-            
             if (string.IsNullOrEmpty(keyString))
                 throw new InvalidOperationException("JWT Key is not configured.");
 
@@ -162,7 +92,9 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
                 UserId = user.Id,
                 FullName = user.FullName
             });
-        }[HttpPost("kiosk-token")]
+        }
+
+        [HttpPost("kiosk-token")]
         [AllowAnonymous]
         public async Task<IActionResult> KioskToken()
         {
@@ -196,5 +128,66 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
 
             return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
+
+        [HttpPost("send-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
+        {
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
+
+            if (user == null)
+                return NotFound(new { message = "Số điện thoại chưa được đăng ký." });
+
+            var otp = new Random().Next(100000, 999999).ToString();
+            _cache.Set($"otp:{request.Phone}", otp, TimeSpan.FromMinutes(5));
+
+            Console.WriteLine($"[OTP] {request.Phone} → {otp}");
+
+            return Ok(new { message = "OTP đã được gửi." });
+        }
+
+        [HttpPost("verify-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            if (!_cache.TryGetValue($"otp:{request.Phone}", out string? storedOtp) || storedOtp != request.Otp)
+                return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
+
+            _cache.Remove($"otp:{request.Phone}");
+
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
+
+            if (user == null) return Unauthorized();
+
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Name, user.FullName ?? "")
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                userName = user.FullName
+            });
+        }
+
+        public record SendOtpRequest(string Phone);
+        public record VerifyOtpRequest(string Phone, string Otp);
     }
 }

@@ -1,13 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // ── State Machine Core ────────────────────────────────────────────────────
-    const STATES = [
-        'Splash', 'PhoneInput', 'OtpInput', 'AuthSuccess',
-        'VehicleSelect', 'DepositInfo', 'Idle', 'Active',
-        'Success', 'ReturnScan', 'ReturnProcessing', 'ReturnReceipt',
-        'Error'
-    ];
-
     function goToState(name, payload = {}) {
         document.querySelectorAll('.state-container').forEach(el => el.style.display = 'none');
         const el = document.getElementById('paymentState_' + name);
@@ -18,19 +10,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     let currentState = null;
-
-    // ── Runtime State ─────────────────────────────────────────────────────────
-    let kioskToken    = null;
-    let userToken     = null;
+    let kioskToken      = null;
+    let userToken       = null;
     let currentRentalId = null;
-    let timerInterval = null;
+    let timerInterval   = null;
     let pollingInterval = null;
-    let otpPhone      = null;
+    let otpPhone        = null;
 
-    // ── Element Refs ──────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
 
-    // ── State Entry Handlers ──────────────────────────────────────────────────
+    // ── Numpad ────────────────────────────────────────────────────────────────
+    document.addEventListener('click', e => {
+        const key = e.target.closest('.numpad-key');
+        if (!key) return;
+        const input = document.getElementById(key.dataset.target);
+        if (!input) return;
+        const val = key.dataset.val;
+        if (val === 'clear') input.value = '';
+        else if (val === 'back') input.value = input.value.slice(0, -1);
+        else if (input.value.length < parseInt(input.maxLength)) input.value += val;
+    });
+
     const onEnter = {
 
         Splash: () => {
@@ -43,24 +43,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             $('btnSubmitPhone')?.addEventListener('click', async () => {
                 const phone = $('phoneInput').value.trim();
                 if (!phone.match(/^(0|\+84)\d{9}$/)) {
-                    $('phoneError').textContent = 'Số điện thoại không hợp lệ.';
+                    $('phoneError').textContent = 'So dien thoai khong hop le.';
                     return;
                 }
                 otpPhone = phone;
                 try {
-                    await fetch('/api/auth/send-otp', {
+                    const res = await fetch('/api/auth/send-otp', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ phone })
                     });
+                    if (!res.ok) {
+                        const data = await res.json();
+                        $('phoneError').textContent = data.message || 'Khong the gui OTP.';
+                        return;
+                    }
                     goToState('OtpInput');
                 } catch {
-                    $('phoneError').textContent = 'Không thể gửi OTP. Thử lại.';
+                    $('phoneError').textContent = 'Khong the gui OTP. Thu lai.';
                 }
             }, { once: true });
         },
 
         OtpInput: () => {
+            $('otpInput').value = '';
             $('otpError').textContent = '';
             $('btnSubmitOtp')?.addEventListener('click', async () => {
                 const otp = $('otpInput').value.trim();
@@ -75,10 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         userToken = data.token;
                         goToState('AuthSuccess', { userName: data.userName });
                     } else {
-                        $('otpError').textContent = data.message || 'Mã OTP sai. Thử lại.';
+                        $('otpError').textContent = data.message || 'Ma OTP sai. Thu lai.';
                     }
                 } catch {
-                    $('otpError').textContent = 'Lỗi kết nối.';
+                    $('otpError').textContent = 'Loi ket noi.';
                 }
             }, { once: true });
         },
@@ -88,26 +94,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => goToState('VehicleSelect'), 2000);
         },
 
-        VehicleSelect: () => {
-            document.querySelectorAll('.vehicle-option-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const vehicleId = parseInt(btn.dataset.vehicleId);
-                    goToState('DepositInfo', { vehicleId });
-                }, { once: true });
-            });
+        VehicleSelect: async () => {
+            const list = document.querySelector('.vehicle-option-list');
+            list.innerHTML = '<p class="section-subtitle">Dang tai...</p>';
+            try {
+                const res = await fetch('/api/vehicles');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const vehicles = await res.json();
+
+                if (!vehicles.length) {
+                    list.innerHTML = '<p class="error-msg">Khong co xe kha dung.</p>';
+                    return;
+                }
+
+                list.innerHTML = vehicles.map(v => {
+                    const depositRate = v.grade === 2 ? 0.20 : v.grade === 1 ? 0.15 : 0.10;
+                    const deposit = (v.marketValue * depositRate).toLocaleString('vi-VN');
+                    const icon = v.grade === 2 ? '\u{1F6F5}' : v.grade === 1 ? '\u26A1' : '\u{1F6B2}';
+                    const gradeName = ['C', 'B', 'A'][v.grade] ?? '?';
+                    return `<button class="vehicle-option-btn" data-vehicle-id="${v.id}" data-market-value="${v.marketValue}" data-grade="${v.grade}" data-hourly-rate="${v.hourlyRate}" data-name="${v.name}">
+                        <span class="vehicle-icon">${icon}</span>
+                        <div class="vehicle-option-info">
+                            <span class="vehicle-option-name">${v.name}</span>
+                            <span class="vehicle-option-desc">Grade ${gradeName} — Phi coc: ${deposit} VND</span>
+                        </div>
+                        <span class="vehicle-option-arrow">&rarr;</span>
+                    </button>`;
+                }).join('');
+
+                document.querySelectorAll('.vehicle-option-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        goToState('DepositInfo', {
+                            vehicleId:   parseInt(btn.dataset.vehicleId),
+                            marketValue: parseFloat(btn.dataset.marketValue),
+                            grade:       parseInt(btn.dataset.grade),
+                            hourlyRate:  parseFloat(btn.dataset.hourlyRate),
+                            name:        btn.dataset.name
+                        });
+                    }, { once: true });
+                });
+            } catch (err) {
+                list.innerHTML = `<p class="error-msg">Khong the tai danh sach xe: ${err.message}</p>`;
+            }
         },
 
-        DepositInfo: ({ vehicleId } = {}) => {
-            // Store selected vehicle for rental start
+        DepositInfo: ({ vehicleId, marketValue, grade, hourlyRate, name } = {}) => {
             window._selectedVehicleId = vehicleId;
+            const depositRate = grade === 2 ? 0.20 : grade === 1 ? 0.15 : 0.10;
+            const depositAmt  = marketValue * depositRate;
+            const rows = document.querySelectorAll('#paymentState_DepositInfo .deposit-row');
+            if (rows[0]) rows[0].querySelector('.deposit-value').textContent = hourlyRate.toLocaleString('vi-VN') + ' VND';
+            if (rows[1]) rows[1].querySelector('.deposit-value').textContent = depositAmt.toLocaleString('vi-VN') + ' VND';
             $('btnConfirmDeposit')?.addEventListener('click', () => goToState('Idle'), { once: true });
         },
 
-        // ── Original Idle → Active → Success flow, preserved ─────────────────
         Idle: () => {
             $('systemMessage').textContent = '';
             $('btnStartRental').disabled = false;
-            $('btnStartRental').textContent = 'TẠO MÃ VIETQR';
+            $('btnStartRental').textContent = 'TAO MA VIETQR';
             $('btnStartRental')?.addEventListener('click', handleStartRental, { once: true });
         },
 
@@ -124,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         Success: ({ vehicleId, dockId } = {}) => {
             if ($('assignedVehicleId')) $('assignedVehicleId').textContent = vehicleId ?? 'N/A';
             if ($('assignedDockId'))   $('assignedDockId').textContent   = dockId   ?? 'N/A';
-            setTimeout(() => goToState('Splash'), 30000); // reset after 30s
+            setTimeout(() => goToState('Splash'), 30000);
             $('btnDone')?.addEventListener('click', () => goToState('Splash'), { once: true });
         },
 
@@ -133,93 +177,76 @@ document.addEventListener('DOMContentLoaded', async () => {
             $('returnError').textContent = '';
             $('btnSubmitReturn')?.addEventListener('click', async () => {
                 const bikeCode = $('bikeIdInput').value.trim();
-                if (!bikeCode) { $('returnError').textContent = 'Nhập mã xe.'; return; }
+                if (!bikeCode) { $('returnError').textContent = 'Nhap ma xe.'; return; }
                 try {
                     const res = await fetch('/api/rentals/return', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${userToken}`
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                         body: JSON.stringify({ bikeCode })
                     });
                     const data = await res.json();
-                    if (res.ok) {
-                        goToState('ReturnProcessing', { rentalId: data.rentalId });
-                    } else {
-                        $('returnError').textContent = data.message || 'Không tìm thấy xe.';
-                    }
+                    if (res.ok) goToState('ReturnProcessing', { rentalId: data.rentalId });
+                    else $('returnError').textContent = data.message || 'Khong tim thay xe.';
                 } catch {
-                    $('returnError').textContent = 'Lỗi kết nối.';
+                    $('returnError').textContent = 'Loi ket noi.';
                 }
             }, { once: true });
         },
 
-        ReturnProcessing: ({ rentalId } = {}) => {
-            pollReturnStatus(rentalId);
-        },
+        ReturnProcessing: ({ rentalId } = {}) => { pollReturnStatus(rentalId); },
 
         ReturnReceipt: ({ summary } = {}) => {
-            if ($('receiptBaseFare'))     $('receiptBaseFare').textContent     = fmt(summary?.baseFare);
-            if ($('receiptDiscount'))     $('receiptDiscount').textContent     = fmt(summary?.discount);
-            if ($('receiptFinalFare'))    $('receiptFinalFare').textContent    = fmt(summary?.finalFare);
-            if ($('receiptDepositNote'))  $('receiptDepositNote').textContent  = summary?.depositNote ?? '';
+            if ($('receiptBaseFare'))    $('receiptBaseFare').textContent    = fmt(summary?.baseFare);
+            if ($('receiptDiscount'))    $('receiptDiscount').textContent    = fmt(summary?.discount);
+            if ($('receiptFinalFare'))   $('receiptFinalFare').textContent   = fmt(summary?.finalFare);
+            if ($('receiptDepositNote')) $('receiptDepositNote').textContent = summary?.depositNote ?? '';
             setTimeout(() => goToState('Splash'), 30000);
             $('btnReceiptDone')?.addEventListener('click', () => goToState('Splash'), { once: true });
         },
 
         Error: ({ message } = {}) => {
-            if ($('errorMessage')) $('errorMessage').textContent = message ?? 'Đã xảy ra lỗi.';
+            if ($('errorMessage')) $('errorMessage').textContent = message ?? 'Da xay ra loi.';
             setTimeout(() => goToState('Splash'), 10000);
             $('btnErrorRetry')?.addEventListener('click', () => goToState('Splash'), { once: true });
         }
     };
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
     async function handleStartRental() {
-        if (!kioskToken) return;
         $('btnStartRental').disabled = true;
-        $('btnStartRental').textContent = 'ĐANG TẠO MÃ...';
-
+        $('btnStartRental').textContent = 'DANG TAO MA...';
         try {
             const res = await fetch('/api/rentals/start', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${kioskToken}`
-                },
-                body: JSON.stringify({ vehicleId: window._selectedVehicleId ?? 1, mode: 0 })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                body: JSON.stringify({ vehicleId: window._selectedVehicleId, mode: 0 })
             });
             const data = await res.json();
-
             if (res.ok) {
                 currentRentalId = data.rentalId;
                 goToState('Active', { qrUrl: data.qrUrl, rentalId: data.rentalId });
             } else {
-                $('systemMessage').textContent = data.message || 'Lỗi hệ thống.';
+                $('systemMessage').textContent = data.message || 'Loi he thong.';
                 goToState('Idle');
             }
         } catch {
-            goToState('Error', { message: 'Không thể kết nối máy chủ.' });
+            goToState('Error', { message: 'Khong the ket noi may chu.' });
         }
     }
 
-    // ── Polling ───────────────────────────────────────────────────────────────
     function startPolling(rentalId) {
         pollingInterval = setInterval(async () => {
             try {
                 const res = await fetch(`/api/rentals/${rentalId}/status`, {
-                    headers: { 'Authorization': `Bearer ${kioskToken}` }
+                    headers: { 'Authorization': `Bearer ${userToken}` }
                 });
                 if (!res.ok) return;
                 const data = await res.json();
-
                 if (data.status === 'Active') {
                     stopAll();
                     goToState('Success', { vehicleId: data.vehicleCode, dockId: data.dockId });
                 } else if (data.status === 'Cancelled') {
                     stopAll();
-                    goToState('Error', { message: 'Giao dịch đã bị huỷ.' });
+                    goToState('Error', { message: 'Giao dich da bi huy.' });
                 }
             } catch { /* silent */ }
         }, 3000);
@@ -235,21 +262,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if (!res.ok) return;
                 const data = await res.json();
-
                 if (data.status === 'Completed') {
                     clearInterval(interval);
                     goToState('ReturnReceipt', { summary: data.summary });
                 }
             } catch { /* silent */ }
-
-            if (attempts > 20) { // 60s timeout
+            if (attempts > 20) {
                 clearInterval(interval);
-                goToState('Error', { message: 'Trả xe quá thời gian. Liên hệ kỹ thuật viên.' });
+                goToState('Error', { message: 'Tra xe qua thoi gian. Lien he ky thuat vien.' });
             }
         }, 3000);
     }
 
-    // ── Countdown ─────────────────────────────────────────────────────────────
     function startCountdown(seconds) {
         clearInterval(timerInterval);
         let timer = seconds;
@@ -258,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (el) el.textContent = `${String(Math.floor(timer / 60)).padStart(2,'0')}:${String(timer % 60).padStart(2,'0')}`;
             if (--timer < 0) {
                 stopAll();
-                goToState('Error', { message: 'Phiên giao dịch đã hết hạn. Vui lòng thử lại.' });
+                goToState('Error', { message: 'Phien giao dich da het han. Vui long thu lai.' });
             }
         }, 1000);
     }
@@ -269,16 +293,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         timerInterval = pollingInterval = null;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    const fmt = n => n != null ? n.toLocaleString('vi-VN') + ' VNĐ' : 'N/A';
+    const fmt = n => n != null ? n.toLocaleString('vi-VN') + ' VND' : 'N/A';
 
-    // ── Boot ──────────────────────────────────────────────────────────────────
     try {
         const res = await fetch('/api/auth/kiosk-token', { method: 'POST' });
         const data = await res.json();
         kioskToken = data.token;
     } catch {
-        goToState('Error', { message: 'Lỗi kết nối hệ thống. Vui lòng liên hệ kỹ thuật viên.' });
+        goToState('Error', { message: 'Loi ket noi he thong. Vui long lien he ky thuat vien.' });
         return;
     }
 
