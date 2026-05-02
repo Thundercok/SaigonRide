@@ -121,15 +121,24 @@ namespace SaigonRide.App.Controllers
             if (userId == null) return Unauthorized();
 
             var rental = await _context.Rentals
+                .Include(r => r.Vehicle)
                 .Where(r => r.Id == id && r.UserId == userId)
-                .Select(r => new { r.Id, r.Status })
+                .Select(r => new {
+                    r.Id,
+                    r.Status,
+                    vehicleCode = r.Vehicle.LicensePlate ?? r.Vehicle.Name,
+                    dockId = "Dock" + r.StartStationId.ToString()
+                })
                 .FirstOrDefaultAsync();
 
             if (rental == null) return NotFound();
 
-            return Ok(new { status = rental.Status.ToString() });
+            return Ok(new {
+                status = rental.Status.ToString(),
+                vehicleCode = rental.vehicleCode,
+                dockId = rental.dockId
+            });
         }
-
         // ─── RETURN RENTAL ────────────────────────────────────────────────────────
         [HttpPost("return/{rentalId}")]
         public async Task<IActionResult> ReturnRental(int rentalId)

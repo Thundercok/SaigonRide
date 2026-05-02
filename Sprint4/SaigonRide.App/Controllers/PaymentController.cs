@@ -141,7 +141,7 @@ namespace SaigonRide.App.Controllers
 
         // ─── STATUS CHECK ─────────────────────────────────────────────────────────
 
-        [HttpGet("{id}/status")]
+        [HttpGet("{id}/payment-status")]
         public async Task<IActionResult> GetRentalStatus(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

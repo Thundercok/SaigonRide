@@ -6,6 +6,7 @@ using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
@@ -61,6 +62,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // --- JWT Authentication ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

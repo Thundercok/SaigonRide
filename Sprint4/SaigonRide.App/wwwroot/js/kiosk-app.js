@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const $ = id => document.getElementById(id);
 
-    // ── Numpad ────────────────────────────────────────────────────────────────
     document.addEventListener('click', e => {
         const key = e.target.closest('.numpad-key');
         if (!key) return;
@@ -42,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             $('phoneError').textContent = '';
             $('btnSubmitPhone')?.addEventListener('click', async () => {
                 const phone = $('phoneInput').value.trim();
-                if (!phone.match(/^(0|\+84)\d{9}$/)) {
+                if (!phone.match(/^(0|\+84)\d{8,10}$/)) {
                     $('phoneError').textContent = 'So dien thoai khong hop le.';
                     return;
                 }
@@ -221,8 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({ vehicleId: window._selectedVehicleId, mode: 0 })
             });
             const data = await res.json();
+            console.log('[START] response:', JSON.stringify(data));
             if (res.ok) {
                 currentRentalId = data.rentalId;
+                console.log('[START] rentalId:', data.rentalId);
                 goToState('Active', { qrUrl: data.qrUrl, rentalId: data.rentalId });
             } else {
                 $('systemMessage').textContent = data.message || 'Loi he thong.';
@@ -234,11 +235,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function startPolling(rentalId) {
+        console.log('[POLL] starting for rentalId:', rentalId);
+        console.log('[POLL] userToken preview:', userToken?.substring(0, 50));
         pollingInterval = setInterval(async () => {
             try {
                 const res = await fetch(`/api/rentals/${rentalId}/status`, {
                     headers: { 'Authorization': `Bearer ${userToken}` }
                 });
+                console.log('[POLL] status HTTP:', res.status, 'rentalId:', rentalId);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.status === 'Active') {

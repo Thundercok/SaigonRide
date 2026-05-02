@@ -21,11 +21,17 @@ namespace SaigonRide.App.Services
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await CancelExpiredRentalsAsync();
+                try
+                {
+                    await CancelExpiredRentalsAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "PendingRentalTimeoutWorker error — will retry next interval.");
+                }
                 await Task.Delay(_interval, stoppingToken);
             }
         }
-
         private async Task CancelExpiredRentalsAsync()
         {
             using var scope = _scopeFactory.CreateScope();
