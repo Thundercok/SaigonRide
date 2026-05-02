@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "KddcDfZtfg4=",
+  "dgSpecHash": "7e9I+Vwrg0Q=",
   "success": true,
   "projectFilePath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
   "expectedPackageFiles": [
@@ -58,6 +58,7 @@
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.core/2.1.11/sqlitepclraw.core.2.1.11.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.lib.e_sqlite3/2.1.11/sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.provider.e_sqlite3/2.1.11/sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512",
+    "/Users/thundercock2/.nuget/packages/stripe.net/51.1.0/stripe.net.51.1.0.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/system.clientmodel/1.5.1/system.clientmodel.1.5.1.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/system.codedom/9.0.0/system.codedom.9.0.0.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/system.composition/9.0.0/system.composition.9.0.0.nupkg.sha512",

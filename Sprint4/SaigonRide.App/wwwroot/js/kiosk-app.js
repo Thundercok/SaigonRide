@@ -135,7 +135,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 list.innerHTML = `<p class="error-msg">Khong the tai danh sach xe: ${err.message}</p>`;
             }
-        },
+        },// In the deposit state HTML render:
+        html += `
+  <button class="btn btn-primary" onclick="startVietQR()">🇻🇳 VietQR (Domestic)</button>
+  <button class="btn btn-outline" onclick="startStripeCheckout()">💳 Card Payment (International)</button>
+`;const urlParams = new URLSearchParams(window.location.search);
+        const stripeSession = urlParams.get('stripe_session');
+        const rentalId = urlParams.get('rental_id');
+        const cancelled = urlParams.get('stripe_cancelled');
+
+        if (stripeSession && rentalId) {
+        // Payment submitted — poll status same as VietQR flow
+        state.rentalId = rentalId;
+        goToState('polling'); // your existing polling state
+    } else if (cancelled && rentalId) {
+        state.rentalId = rentalId;
+        goToState('deposit', { error: 'Payment cancelled. Try again.' });
+    } else {
+        goToState('splash');
+    }
+
+        async function startStripeCheckout() {
+            const res = await fetch('/api/payment/stripe/create-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.token}`
+                },
+                body: JSON.stringify({
+                    rentalId: state.rentalId,
+                    depositAmountVnd: state.depositAmount,
+                    baseUrl: window.location.origin
+                })
+            });
+            const data = await res.json();
+            window.location.href = data.url; // redirect to Stripe Hosted Checkout
+        }
+        
 
         DepositInfo: ({ vehicleId, marketValue, grade, hourlyRate, name } = {}) => {
             window._selectedVehicleId = vehicleId;

@@ -17,7 +17,8 @@
           "Microsoft.EntityFrameworkCore.Sqlite": "10.0.7",
           "Microsoft.EntityFrameworkCore.Sqlite.Core": "10.0.7",
           "Microsoft.EntityFrameworkCore.Sqlite.Design": "1.1.6",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.1"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.1",
+          "Stripe.net": "51.1.0"
         },
         "runtime": {
           "SaigonRide.App.dll": {}
@@ -972,6 +973,18 @@
           }
         }
       },
+      "Stripe.net/51.1.0": {
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.3",
+          "System.Configuration.ConfigurationManager": "9.0.4"
+        },
+        "runtime": {
+          "lib/net9.0/Stripe.net.dll": {
+            "assemblyVersion": "51.1.0.0",
+            "fileVersion": "51.1.0.0"
+          }
+        }
+      },
       "System.ClientModel/1.5.1": {
         "dependencies": {
           "System.Memory.Data": "8.0.1"
@@ -1501,6 +1514,13 @@
       "sha512": "sha512-Y/0ZkR+r0Cg3DQFuCl1RBnv/tmxpIZRU3HUvelPw6MVaKHwYYR8YNvgs0vuNuXCMvlyJ+Fh88U1D4tah1tt6qw==",
       "path": "sqlitepclraw.provider.e_sqlite3/2.1.11",
       "hashPath": "sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512"
+    },
+    "Stripe.net/51.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-q4Kj14NP0jaGKRkeuCTL2Mwn7BVgVUHowBiGJAX2fGiEIOVbdhpCERlNRTuvirN/5IGae6cCToS0+H/oSX395A==",
+      "path": "stripe.net/51.1.0",
+      "hashPath": "stripe.net.51.1.0.nupkg.sha512"
     },
     "System.ClientModel/1.5.1": {
       "type": "package",

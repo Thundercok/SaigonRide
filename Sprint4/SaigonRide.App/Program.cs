@@ -7,6 +7,8 @@ using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using SaigonRide.App.Settings;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
@@ -99,7 +101,17 @@ var app = builder.Build();
 //}
 //else
 //{
-//    app.UseExceptionHandler("/Home/Error");
+//    stripe
+
+
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
+// Webhook needs raw body — must come BEFORE UseRouting
+app.Use(async (ctx, next) => {
+    ctx.Request.EnableBuffering();
+    await next();
+});
 //}
 app.UseDeveloperExceptionPage();
 
