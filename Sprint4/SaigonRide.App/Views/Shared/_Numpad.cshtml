@@ -1,0 +1,58 @@
+@model string
+
+    <div class="numpad">
+        <button class="numpad-key" data-target="@Model" data-val="1">1</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="2">2</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="3">3</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="4">4</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="5">5</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="6">6</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="7">7</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="8">8</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="9">9</button>
+        <button class="numpad-key numpad-clear" data-target="phoneInput" data-val="clear">C</button>
+        <button class="numpad-key" data-target="phoneInput" data-val="0">0</button>
+    <button class="numpad-key numpad-back" data-target="phoneInput" data-val="back">⌫</button>
+    </div>
+        <!-- ══ 2. PHONE INPUT ══════════════════════════════════════════════ -->
+            <div id="paymentState_PhoneInput" class="state-container" style="display:none;">
+                <h2 class="section-title">Nhập Số Điện Thoại</h2>
+                <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP để xác thực</p>
+                <div class="input-group">
+                    <input id="phoneInput" class="kiosk-input" type="tel"
+                           placeholder="0901 234 567" maxlength="11" inputmode="numeric" />
+                    <p id="phoneError" class="error-msg"></p>
+                </div>
+                
+                <button id="btnSubmitPhone" class="action-btn btn-primary" style="margin-top:24px;">
+                    GỬI MÃ OTP →
+                </button>
+            </div>
+
+            <!-- ══ 3. OTP INPUT ════════════════════════════════════════════════ -->
+            <div id="paymentState_OtpInput" class="state-container" style="display:none;">
+                <h2 class="section-title">Nhập Mã OTP</h2>
+                <p class="section-subtitle">Mã 6 chữ số đã được gửi tới số điện thoại của bạn</p>
+                <div class="input-group">
+                    <input id="otpInput" class="kiosk-input kiosk-input--otp" type="text"
+                           placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" />
+                    <p id="otpError" class="error-msg"></p>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-key" data-target="otpInput" data-val="1">1</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="2">2</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="3">3</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="4">4</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="5">5</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="6">6</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="7">7</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="8">8</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="9">9</button>
+                    <button class="numpad-key numpad-clear" data-target="otpInput" data-val="clear">C</button>
+                    <button class="numpad-key" data-target="otpInput" data-val="0">0</button>
+                    <button class="numpad-key numpad-back" data-target="otpInput" data-val="back">⌫</button>
+                </div>
+                <button id="btnSubmitOtp" class="action-btn btn-primary" style="margin-top:24px;">
+                    XÁC NHẬN →
+                </button>
+            </div>
