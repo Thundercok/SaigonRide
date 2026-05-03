@@ -85,6 +85,33 @@ namespace SaigonRide.App.Data
                 );
                 await context.SaveChangesAsync();
             }
+            // 4. Seed Stations
+            if (!context.Stations.Any())
+            {
+                context.Stations.AddRange(
+                    new Station
+                    {
+                        Id        = 1,
+                        Name      = "Ton Duc Thang Hub",
+                        Address   = "7 Nguyen Huu Tho, Phuong Ben Thanh TP.HCM",
+                        Latitude  = 10.7725,
+                        Longitude = 106.6980,
+                        Capacity  = 20,
+                        IsActive  = true
+                    },
+                    new Station
+                    {
+                        Id        = 2,
+                        Name      = "Bình Thạnh Hub",
+                        Address   = "Depot Metro Line 1, Bình Thạnh, TP.HCM",
+                        Latitude  = 10.8009,
+                        Longitude = 106.7157,
+                        Capacity  = 15,
+                        IsActive  = true
+                    }
+                );
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
