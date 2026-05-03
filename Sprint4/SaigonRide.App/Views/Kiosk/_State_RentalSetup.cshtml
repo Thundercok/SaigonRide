@@ -55,10 +55,15 @@
     </button>
 </div>
 
-<!-- ══ 7. IDLE (QR Generate) ══════════════════════════════════════ -->
-<div id="paymentState_Idle" class="state-container">
-    <h2 class="section-title">Chọn Mở Khóa Để Tạo Mã</h2>
-    <button id="btnStartRental" class="action-btn btn-primary">TẠO MÃ VIETQR</button>
+<!-- ══ 7. IDLE (Payment Method Select) ══════════════════════════════════════ -->
+<div id="paymentState_Idle" class="state-container" style="display:none;">
+    <h2 class="section-title">Chọn Phương Thức Thanh Toán</h2>
+    <p class="section-subtitle">Thanh toán cọc để mở khóa xe</p>
+    
+    <!-- JS will inject the VietQR and Stripe buttons here -->
+    <div id="idleActionArea" style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+    </div>
+    
     <p id="systemMessage" class="system-msg"></p>
 </div>
 

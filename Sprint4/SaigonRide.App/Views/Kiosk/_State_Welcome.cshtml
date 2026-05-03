@@ -1,11 +1,18 @@
-<!-- ══ 1. SPLASH ══════════════════════════════════════════════════ -->
 <div id="paymentState_Splash" class="state-container">
     <div class="splash-logo">
         <span class="logo-icon-lg">🚇</span>
         <h1 class="splash-brand">SAIGONRIDE</h1>
     </div>
-    <button id="btnTouchToStart" class="action-btn btn-primary btn-xl">
-        CHẠM ĐỂ BẮT ĐẦU
-    </button>
+    
+    <!-- Added a flex container for two buttons -->
+    <div style="display: flex; gap: 24px; justify-content: center; margin-top: 40px; margin-bottom: 30px;">
+        <button id="btnTouchToStart" class="action-btn btn-primary btn-xl" style="width: 250px;">
+            THUÊ XE
+        </button>
+        <button id="btnGoToReturn" class="action-btn btn-secondary btn-xl" style="width: 250px;">
+            TRẢ XE
+        </button>
+    </div>
+
     <p class="splash-hint">Liên hệ hỗ trợ: 1800 000 000</p>
 </div>
