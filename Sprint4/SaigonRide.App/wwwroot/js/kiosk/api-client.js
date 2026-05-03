@@ -1,49 +1,86 @@
-// api-client.js
+// api-client.js — all network calls. No state. No DOM. Pure async functions.
+
 const ApiClient = {
-    // Simulate sending an OTP
-    sendOtp: async (phoneNumber) => {
-        console.log(`API: Sending OTP to ${phoneNumber}...`);
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({ success: true, message: "OTP Sent" });
-            }, 800); // 800ms fake network delay
-        });
+
+    async kioskToken() {
+        const res = await fetch('/api/auth/kiosk-token', { method: 'POST' });
+        if (!res.ok) throw new Error('Kiosk token failed');
+        return res.json();
     },
 
-    // Simulate verifying the OTP
-    verifyOtp: async (otpCode) => {
-        console.log(`API: Verifying OTP ${otpCode}...`);
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (otpCode === "123456") { // Hardcoded success code for testing
-                    resolve({ success: true, userName: "Huỳnh Nhật Huy" });
-                } else {
-                    resolve({ success: false, message: "Mã OTP không hợp lệ." });
-                }
-            }, 1000);
+    async sendOtp(phone) {
+        const res = await fetch('/api/auth/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
         });
+        return { ok: res.ok, data: await res.json() };
     },
 
-    // Simulate generating a VietQR code string
-    generateVietQr: async (vehicleId) => {
-        console.log(`API: Generating QR for vehicle type ${vehicleId}...`);
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    success: true,
-                    // Using a placeholder image for the QR code
-                    qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ThanhToanSaigonRide"
-                });
-            }, 1200);
+    async verifyOtp(phone, otp) {
+        const res = await fetch('/api/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, otp })
         });
+        return { ok: res.ok, data: await res.json() };
     },
 
-    // Simulate polling the bank to see if they transferred the money
-    checkPaymentStatus: async () => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({ success: true, assignedBike: "BK-089", dockId: "Dock 04" });
-            }, 3000); // Pretend it takes 3 seconds for the user to scan and pay
+    async rfidLogin(rfidId) {
+        const res = await fetch('/api/auth/rfid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rfidId })
         });
+        return { ok: res.ok, data: await res.json() };
+    },
+
+    async getVehicles() {
+        const res = await fetch('/api/vehicles');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    },
+
+    async startRental(vehicleId, token) {
+        const res = await fetch('/api/rentals/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ vehicleId, mode: 0 })
+        });
+        return { ok: res.ok, data: await res.json() };
+    },
+
+    async getRentalStatus(rentalId, token) {
+        const res = await fetch(`/api/rentals/${rentalId}/status`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return null;
+        return res.json();
+    },
+
+    async createStripeCheckout(rentalId, depositAmountVnd, baseUrl, token) {
+        const res = await fetch('/api/payment/stripe/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ rentalId, depositAmountVnd, baseUrl })
+        });
+        return { ok: res.ok, data: await res.json() };
+    },
+
+    async returnRental(bikeCode, token) {
+        const res = await fetch('/api/rentals/return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ bikeCode })
+        });
+        return { ok: res.ok, data: await res.json() };
+    },
+
+    async getReturnStatus(rentalId, token) {
+        const res = await fetch(`/api/rentals/${rentalId}/return-status`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return null;
+        return res.json();
     }
 };

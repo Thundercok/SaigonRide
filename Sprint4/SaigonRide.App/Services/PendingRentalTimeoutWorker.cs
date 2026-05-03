@@ -40,7 +40,7 @@ namespace SaigonRide.App.Services
             var cutoff = DateTime.UtcNow - _timeout;
             var expired = await context.Rentals
                 .Include(r => r.Deposit)
-                .Where(r => r.Status == RentalStatus.Pending && r.StartTime < cutoff)
+                .Where(r => r.Status == RentalStatus.Pending && r.CreatedAt < cutoff)
                 .ToListAsync();
 
             if (!expired.Any()) return;

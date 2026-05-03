@@ -1,3 +1,4 @@
+@model SaigonRide.App.Models.Entities.Station
 @{
     Layout = null;
 }
@@ -9,12 +10,12 @@
     <title>SaigonRide Kiosk</title>
     <link rel="stylesheet" href="~/css/swiss-design.css" />
 </head>
-
 <body>
-<div class="kiosk-container">
+
+<div id="kioskRoot" data-station-id="@Model.Id" class="kiosk-container">
 
     <!-- Left Panel -->
-    <partial name="_VehicleInfoPanel" />
+    @await Html.PartialAsync("_VehicleInfoPanel", Model)
 
     <!-- Right Panel: All States -->
     <div class="payment-panel">
@@ -27,8 +28,10 @@
 
 </div>
 
-<script src="~/js/kiosk/ui-interactions.js"></script>
+@* Load order matters: api-client → ui-interactions → state-manager *@
 <script src="~/js/kiosk/api-client.js"></script>
+<script src="~/js/kiosk/ui-interactions.js"></script>
 <script src="~/js/kiosk/state-manager.js"></script>
+
 </body>
 </html>

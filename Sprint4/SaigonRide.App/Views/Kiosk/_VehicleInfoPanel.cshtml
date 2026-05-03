@@ -1,10 +1,12 @@
+@model SaigonRide.App.Models.Entities.Station
+
 <div class="info-panel">
     <div class="brand-header">
         <span class="logo-icon">🚇</span> SAIGONRIDE
     </div>
     <div class="location-context">
-        <span class="hub-label">Ben Thanh Hub</span>
-        <span class="status-badge">Station ID: BT-001</span>
+        <span class="hub-label">@Model.Name</span>
+        <span class="status-badge">Station ID: @Model.Id</span>
     </div>
 
     <!-- YOU ARE HERE MAP -->
@@ -15,23 +17,22 @@
                 <span class="pulse-dot"></span> Vị trí Kiosk
             </div>
         </div>
-        
+
         <div class="map-visual">
-            <!-- Inline SVG for the station layout -->
             <svg viewBox="0 0 300 400" class="station-map" preserveAspectRatio="xMidYMid meet">
                 <!-- Background floor -->
                 <rect x="10" y="10" width="280" height="380" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-                
+
                 <!-- Walkways -->
                 <path d="M 10 120 L 290 120" stroke="#ffffff" stroke-width="30" />
                 <path d="M 150 10 L 150 390" stroke="#ffffff" stroke-width="40" />
-                
+
                 <!-- Bike Docks (Left Side) -->
-                <rect x="40" y="40" width="40" height="20" rx="4" fill="#cbd5e1" />
-                <rect x="40" y="70" width="40" height="20" rx="4" fill="#cbd5e1" />
+                <rect x="40" y="40"  width="40" height="20" rx="4" fill="#cbd5e1" />
+                <rect x="40" y="70"  width="40" height="20" rx="4" fill="#cbd5e1" />
                 <rect x="40" y="160" width="40" height="20" rx="4" fill="#cbd5e1" />
                 <rect x="40" y="190" width="40" height="20" rx="4" fill="#cbd5e1" />
-                
+
                 <!-- E-Scooter Docks (Right Side) -->
                 <rect x="220" y="40" width="40" height="20" rx="4" fill="#94a3b8" />
                 <rect x="220" y="70" width="40" height="20" rx="4" fill="#94a3b8" />
@@ -39,24 +40,21 @@
                 <!-- Main Station Building -->
                 <rect x="180" y="240" width="90" height="120" rx="8" fill="#e2e8f0" />
                 <text x="225" y="305" font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-anchor="middle" font-weight="bold">HUB</text>
-                
-                <!-- 'YOU ARE HERE' Marker -->
+
+                <!-- YOU ARE HERE Marker -->
                 <g transform="translate(100, 220)">
-                    <!-- SVG pulsing rings -->
                     <circle cx="0" cy="0" r="15" fill="rgba(0, 102, 255, 0.2)">
-                        <animate attributeName="r" values="10; 30; 10" dur="2s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="1; 0; 1" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="r"       values="10; 30; 10" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="1; 0; 1"    dur="2s" repeatCount="indefinite" />
                     </circle>
-                    <!-- Core blue dot -->
                     <circle cx="0" cy="0" r="8" fill="#0066ff" stroke="#ffffff" stroke-width="3" />
-                    <!-- Label -->
                     <rect x="-25" y="-35" width="50" height="20" rx="4" fill="#1e293b" />
                     <text x="0" y="-21" font-family="system-ui, sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="bold">KIOSK</text>
-                    <!-- Little arrow pointing down to the dot -->
                     <polygon points="-5,-15 5,-15 0,-8" fill="#1e293b" />
                 </g>
             </svg>
         </div>
+
         <div class="map-footer">
             <span class="footer-icon">📍</span> Quét mã tại dock để nhận xe
         </div>

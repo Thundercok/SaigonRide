@@ -612,9 +612,7 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/scopedcss/bundle/SaigonRide.App.styles.css
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/scopedcss/projectbundle/SaigonRide.App.bundle.scp.css
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/ofa40bqe71-{0}-b9sayid5wm-b9sayid5wm.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/j9swiz3yzq-{0}-90yqlj465b-90yqlj465b.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/vltxs1u3vm-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
@@ -739,8 +737,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/vkfd9qc6ib-{0}-muycvpuwrr-muycvpuwrr.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/lanq2blfj5-{0}-87fc7y1x7t-87fc7y1x7t.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/hglpncss93-{0}-jfsiqqwiad-jfsiqqwiad.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/keoq7wj5zp-{0}-49w716shtc-49w716shtc.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bliwjw774j-{0}-49w716shtc-49w716shtc.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/staticwebassets.build.json
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/staticwebassets.build.json.cache
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/staticwebassets.development.json
@@ -755,6 +751,8 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Npgsql.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-4b6wgy6ef5-4b6wgy6ef5.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Stripe.net.dll
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/6njzjlc6sh-{0}-fh5h8jjroc-fh5h8jjroc.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-x4joplwzl3-x4joplwzl3.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-l33jfyi2lq-l33jfyi2lq.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-wqb8fg6kao-wqb8fg6kao.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-l33jfyi2lq-l33jfyi2lq.gz

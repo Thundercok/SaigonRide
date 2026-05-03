@@ -44,12 +44,44 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_Numpad.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX051bXBhZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_State_Authentication.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1N0YXRlX0F1dGhlbnRpY2F0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_State_RentalSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1N0YXRlX1JlbnRhbFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_State_Return.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1N0YXRlX1JldHVybi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_State_System.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1N0YXRlX1N5c3RlbS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_State_Welcome.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1N0YXRlX1dlbGNvbWUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1ZhbGlkYXRpb25TY3JpcHRzUGFydGlhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Kiosk/_VehicleInfoPanel.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1ZlaGljbGVJbmZvUGFuZWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Shared/_ValidationScriptsPartial.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/_ViewImports.cshtml]
@@ -59,7 +91,3 @@ build_metadata.AdditionalFiles.CssScope =
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
-
-[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Shared/_Layout.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = b-0phfhmfvl2
