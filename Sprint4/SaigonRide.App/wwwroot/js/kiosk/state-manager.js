@@ -35,6 +35,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Trigger input event for validation logic if needed elsewhere
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    // ── Navigation (Back & Cancel Buttons) ───────────────────────────────────────
+    document.addEventListener('click', e => {
+        const backBtn = e.target.closest('[data-back-to]');
+        if (!backBtn) return;
+
+        const targetState = backBtn.getAttribute('data-back-to');
+
+        // If they are going all the way back to the home screen, wipe their session
+        if (targetState === 'Splash') {
+            userToken = null;
+            window._selectedVehicleId = null;
+            stopAll();
+        }
+
+        goToState(targetState);
+    });
 
     // ── Kiosk Idle Timer (Walk-Away Protection) ──────────────────────────────────
     let idleTimeout = null;
@@ -227,7 +243,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (actionArea) {
                 actionArea.innerHTML = `
                     <button id="btnVietQR" class="action-btn btn-primary" style="margin-bottom:12px;">🇻🇳 VietQR (Nội địa)</button>
-                    <button id="btnStripe" class="action-btn btn-secondary">💳 Thẻ quốc tế</button>
+                    <button id="btnStripe" class="action-btn btn-secondary" style="margin-bottom:12px;">💳 Thẻ quốc tế</button>
+                    <button class="action-btn btn-secondary" data-back-to="DepositInfo">⬅ QUAY LẠI</button>
                 `;
                 $('btnVietQR').addEventListener('click', handleStartRental, { once: true });
                 $('btnStripe').addEventListener('click', handleStripeCheckout, { once: true });

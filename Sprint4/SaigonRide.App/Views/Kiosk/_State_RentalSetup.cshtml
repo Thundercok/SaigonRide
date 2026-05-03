@@ -62,6 +62,18 @@
     
     <!-- JS will inject the VietQR and Stripe buttons here -->
     <div id="idleActionArea" style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+        <!-- Inside paymentState_VehicleSelect, at the bottom after the vehicle-option-list -->
+        <button class="action-btn btn-secondary" data-back-to="Splash" style="margin-top:24px;">
+            ⬅ HỦY & VỀ TRANG CHỦ
+        </button>
+
+        <!-- Inside paymentState_DepositInfo, under btnConfirmDeposit -->
+        <button class="action-btn btn-secondary" data-back-to="VehicleSelect" style="margin-top:12px;">
+            ⬅ CHỌN XE KHÁC
+        </button>
+
+        <!-- Inside paymentState_Idle, inside the idleActionArea -->
+        <!-- Update your idleActionArea in state-manager.js to include it: -->
     </div>
     
     <p id="systemMessage" class="system-msg"></p>
@@ -104,4 +116,5 @@
     <button id="btnDone" class="action-btn btn-primary" style="margin-top:40px;">
         HOÀN TẤT
     </button>
+    
 </div>
