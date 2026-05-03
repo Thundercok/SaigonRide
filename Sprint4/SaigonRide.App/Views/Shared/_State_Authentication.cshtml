@@ -1,0 +1,46 @@
+<!-- ══ 2. PHONE INPUT ══════════════════════════════════════════════ -->
+<div id="paymentState_PhoneInput" class="state-container" style="display:none;">
+    <h2 class="section-title">Nhập Số Điện Thoại</h2>
+    <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP để xác thực</p>
+    <div class="input-group">
+        <input id="phoneInput" class="kiosk-input" type="tel"
+               placeholder="0901 234 567" maxlength="11" inputmode="numeric" />
+        <p id="phoneError" class="error-msg"></p>
+    </div>
+    
+    <partial name="_Numpad" model=' "phoneInput" ' />
+
+    <button id="btnSubmitPhone" class="action-btn btn-primary" style="margin-top:24px;">
+        GỬI MÃ OTP →
+    </button>
+</div>
+
+<!-- ══ 3. OTP INPUT ════════════════════════════════════════════════ -->
+<div id="paymentState_OtpInput" class="state-container" style="display:none;">
+    <h2 class="section-title">Nhập Mã OTP</h2>
+    <p class="section-subtitle">Mã 6 chữ số đã được gửi tới số điện thoại của bạn</p>
+    <div class="input-group">
+        <input id="otpInput" class="kiosk-input kiosk-input--otp" type="text"
+               placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" />
+        <p id="otpError" class="error-msg"></p>
+    </div>
+    
+    <partial name="_Numpad" model=' "otpInput" ' />
+
+    <button id="btnSubmitOtp" class="action-btn btn-primary" style="margin-top:24px;">
+        XÁC NHẬN →
+    </button>
+</div>
+
+<!-- ══ 4. AUTH SUCCESS ════════════════════════════════════════════ -->
+<div id="paymentState_AuthSuccess" class="state-container" style="display:none;">
+    <div class="success-icon-wrapper">
+        <svg class="success-svg" viewBox="0 0 52 52">
+            <circle class="success-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="success-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+    </div>
+    <h2 class="success-title">Xác Thực Thành Công!</h2>
+    <p class="success-subtitle">Chào mừng, <span id="authUserName" class="highlight-name"></span></p>
+    <p class="auto-advance-hint">Đang chuyển hướng...</p>
+</div>
