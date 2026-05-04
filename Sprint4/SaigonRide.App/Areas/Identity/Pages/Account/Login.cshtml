@@ -1,40 +1,38 @@
 ﻿@page
 @model LoginModel
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Đăng nhập";
 }
 
 <div class="identity-container">
     <div class="identity-card">
-        <h1>Welcome Back</h1>
-        <h2>Log in to your account</h2>
+        <h1>Chào mừng trở lại</h1>
+        <h2>Đăng nhập vào tài khoản của bạn</h2>
 
         <form id="account" method="post">
             <div asp-validation-summary="ModelOnly" class="error-msg" role="alert"></div>
-            
+
             <div class="input-group">
                 <label asp-for="Input.Email">Email</label>
                 <input asp-for="Input.Email" class="kiosk-input" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <span asp-validation-for="Input.Email" class="error-msg"></span>
             </div>
-            
+
             <div class="input-group">
-                <label asp-for="Input.Password">Password</label>
-                <input asp-for="Input.Password" class="kiosk-input" autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                <label asp-for="Input.Password">Mật khẩu</label>
+                <input asp-for="Input.Password" class="kiosk-input" autocomplete="current-password" aria-required="true" placeholder="Nhập mật khẩu" />
                 <span asp-validation-for="Input.Password" class="error-msg"></span>
             </div>
-            
+
             <div class="checkbox-group">
                 <input class="form-check-input" asp-for="Input.RememberMe" />
                 <label class="form-check-label" asp-for="Input.RememberMe">
                     @Html.DisplayNameFor(m => m.Input.RememberMe)
                 </label>
             </div>
-            
-            <button id="login-submit" type="submit" class="action-btn btn-primary">Log in</button>
-            
-            <!-- Cross-link to Register -->
-            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="action-btn btn-secondary">Create a new account</a>
+
+            <button id="login-submit" type="submit" class="action-btn btn-primary">Đăng nhập</button>
+            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="action-btn btn-secondary">Tạo tài khoản mới</a>
         </form>
     </div>
 </div>

@@ -1,39 +1,37 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Đăng ký";
 }
 
 <div class="identity-container">
     <div class="identity-card">
-        <h1>Create Account</h1>
-        <h2>Register to get started</h2>
+        <h1>Tạo tài khoản</h1>
+        <h2>Đăng ký để bắt đầu</h2>
 
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
             <div asp-validation-summary="ModelOnly" class="error-msg" role="alert"></div>
-            
+
             <div class="input-group">
                 <label asp-for="Input.Email">Email</label>
                 <input asp-for="Input.Email" class="kiosk-input" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <span asp-validation-for="Input.Email" class="error-msg"></span>
             </div>
-            
+
             <div class="input-group">
-                <label asp-for="Input.Password">Password</label>
-                <input asp-for="Input.Password" class="kiosk-input" autocomplete="new-password" aria-required="true" placeholder="Create a password" />
+                <label asp-for="Input.Password">Mật khẩu</label>
+                <input asp-for="Input.Password" class="kiosk-input" autocomplete="new-password" aria-required="true" placeholder="Tạo mật khẩu" />
                 <span asp-validation-for="Input.Password" class="error-msg"></span>
             </div>
-            
+
             <div class="input-group">
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <input asp-for="Input.ConfirmPassword" class="kiosk-input" autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
+                <label asp-for="Input.ConfirmPassword">Xác nhận mật khẩu</label>
+                <input asp-for="Input.ConfirmPassword" class="kiosk-input" autocomplete="new-password" aria-required="true" placeholder="Nhập lại mật khẩu" />
                 <span asp-validation-for="Input.ConfirmPassword" class="error-msg"></span>
             </div>
-            
-            <button id="register-submit" type="submit" class="action-btn btn-primary">Register</button>
 
-            <!-- Cross-link to Login -->
-            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="action-btn btn-secondary">Already have an account? Log in</a>
+            <button id="register-submit" type="submit" class="action-btn btn-primary">Đăng ký</button>
+            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="action-btn btn-secondary">Đã có tài khoản? Đăng nhập</a>
         </form>
     </div>
 </div>
