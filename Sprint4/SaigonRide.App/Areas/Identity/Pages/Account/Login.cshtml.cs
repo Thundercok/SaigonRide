@@ -116,8 +116,8 @@ namespace SaigonRide.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
-                }
+                    var destination = string.IsNullOrEmpty(returnUrl) || returnUrl == "/" ? "/Dashboard" : returnUrl;
+                    return LocalRedirect(destination);                }
                 if (result.RequiresTwoFactor)
                 {
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
