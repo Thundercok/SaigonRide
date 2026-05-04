@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,16 +12,18 @@ namespace SaigonRide.App.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RentalsController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly SepayService _sepayService;
+        private readonly IWebHostEnvironment _env;
 
-        public RentalsController(AppDbContext context, SepayService sepayService)
+        public RentalsController(AppDbContext context, SepayService sepayService, IWebHostEnvironment env)
         {
             _context = context;
             _sepayService = sepayService;
+            _env = env;
         }
 
         // ─── START RENTAL ──────────────────────────────────────────────────────────
@@ -31,12 +34,19 @@ namespace SaigonRide.App.Controllers
             if (userId == null) return Unauthorized();
 
             // 1. One active/pending rental limit per user
-            var hasActiveRental = await _context.Rentals
-                .AnyAsync(r => r.UserId == userId &&
-                               (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending));
+            if (_env.IsDevelopment())
+            {
+                await CancelOpenRentalsForUser(userId);
+            }
+            else
+            {
+                var hasActiveRental = await _context.Rentals
+                    .AnyAsync(r => r.UserId == userId &&
+                                   (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending));
 
-            if (hasActiveRental)
-                return BadRequest(new { Message = "You already have an active or pending rental." });
+                if (hasActiveRental)
+                    return BadRequest(new { Message = "You already have an active or pending rental." });
+            }
 
             // 2. Availability check
             var vehicle = await _context.Vehicles.FindAsync(request.VehicleId);
@@ -260,6 +270,36 @@ namespace SaigonRide.App.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Rental cancelled." });
+        }
+
+        private async Task CancelOpenRentalsForUser(string userId)
+        {
+            var openRentals = await _context.Rentals
+                .Include(r => r.Deposit)
+                .Include(r => r.Vehicle)
+                .Where(r => r.UserId == userId &&
+                            (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending))
+                .ToListAsync();
+
+            foreach (var rental in openRentals)
+            {
+                rental.Status = RentalStatus.Cancelled;
+                rental.EndTime ??= DateTime.UtcNow;
+
+                if (rental.Deposit != null)
+                {
+                    rental.Deposit.Status = DepositStatus.Cancelled;
+                    rental.Deposit.ProcessedAt ??= DateTime.UtcNow;
+                }
+
+                rental.Vehicle.Status = VehicleStatus.Available;
+                rental.Vehicle.StationId ??= rental.StartStationId;
+            }
+
+            if (openRentals.Count > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

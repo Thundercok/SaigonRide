@@ -20,17 +20,20 @@ namespace SaigonRide.App.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
+        private readonly IWebHostEnvironment _env;
 
         public AuthController(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             IConfiguration config,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IWebHostEnvironment env)
         {
             _signInManager = signInManager;
-            _userManager = userManager;
-            _config = config;
-            _cache = cache;
+            _userManager   = userManager;
+            _config        = config;
+            _cache         = cache;
+            _env           = env;
         }
 
         [HttpPost("register")]
@@ -38,9 +41,9 @@ namespace SaigonRide.App.Controllers
         {
             var user = new ApplicationUser
             {
-                UserName = request.Email,
-                Email = request.Email,
-                FullName = request.FullName,
+                UserName  = request.Email,
+                Email     = request.Email,
+                FullName  = request.FullName,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -62,34 +65,10 @@ namespace SaigonRide.App.Controllers
             if (!result.Succeeded)
                 return Unauthorized(new { Message = "Invalid email or password." });
 
-            var jwtSettings = _config.GetSection("JwtSettings");
-            var keyString = jwtSettings["Key"];
-            if (string.IsNullOrEmpty(keyString))
-                throw new InvalidOperationException("JWT Key is not configured.");
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim(ClaimTypes.Name, user.FullName ?? "")
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiresInMinutes"] ?? "60")),
-                signingCredentials: creds
-            );
-
             return Ok(new
             {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expires = token.ValidTo,
-                UserId = user.Id,
+                Token    = GenerateJwt(user, hours: 1),
+                UserId   = user.Id,
                 FullName = user.FullName
             });
         }
@@ -98,35 +77,24 @@ namespace SaigonRide.App.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> KioskToken()
         {
-            var email = _config["KioskCredentials:Email"];
+            var email    = _config["KioskCredentials:Email"];
             var password = _config["KioskCredentials:Password"];
+            if (_env.IsDevelopment())
+            {
+                email    ??= "kiosk@saigonride.com";
+                password ??= "Kiosk@Internal99!";
+            }
 
-            var user = await _userManager.FindByEmailAsync(email!);
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return Unauthorized();
+
+            var user = await _userManager.FindByEmailAsync(email);
             if (user == null) return Unauthorized();
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, password!, lockoutOnFailure: false);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: false);
             if (!result.Succeeded) return Unauthorized();
 
-            var jwtSettings = _config.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email!),
-                new Claim(ClaimTypes.Name, user.FullName ?? "")
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
-                signingCredentials: creds
-            );
-
-            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+            return Ok(new { token = GenerateJwt(user, hours: 8) });
         }
 
         [HttpPost("send-otp")]
@@ -142,6 +110,7 @@ namespace SaigonRide.App.Controllers
             var otp = new Random().Next(100000, 999999).ToString();
             _cache.Set($"otp:{request.Phone}", otp, TimeSpan.FromMinutes(5));
 
+            // Always log in dev so tests and manual testing can see it
             Console.WriteLine($"[OTP] {request.Phone} → {otp}");
 
             return Ok(new { message = "OTP đã được gửi." });
@@ -151,40 +120,60 @@ namespace SaigonRide.App.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
         {
-            if (!_cache.TryGetValue($"otp:{request.Phone}", out string? storedOtp) || storedOtp != request.Otp)
-                return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
+            // ── Dev bypass — magic code for Playwright tests & local dev ──────
+            // Never active in Production (ASPNETCORE_ENVIRONMENT != Development)
+            bool otpValid = false;
 
-            _cache.Remove($"otp:{request.Phone}");
+            if (_env.IsDevelopment() && request.Otp == "123456")
+            {
+                otpValid = true;
+            }
+            else if (_cache.TryGetValue($"otp:{request.Phone}", out string? storedOtp)
+                     && storedOtp == request.Otp)
+            {
+                otpValid = true;
+                _cache.Remove($"otp:{request.Phone}");
+            }
+
+            if (!otpValid)
+                return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
+            // ─────────────────────────────────────────────────────────────────
 
             var user = await _userManager.Users
                 .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
 
             if (user == null) return Unauthorized();
 
+            return Ok(new
+            {
+                token    = GenerateJwt(user, hours: 2),
+                userName = user.FullName
+            });
+        }
+
+        // ── Shared JWT factory ────────────────────────────────────────────────
+        private string GenerateJwt(ApplicationUser user, int hours)
+        {
             var jwtSettings = _config.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var key         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+            var creds       = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim(ClaimTypes.Name, user.FullName ?? "")
+                new Claim(ClaimTypes.Email,           user.Email  ?? ""),
+                new Claim(ClaimTypes.Name,            user.FullName ?? "")
             };
 
             var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
+                issuer:             jwtSettings["Issuer"],
+                audience:           jwtSettings["Audience"],
+                claims:             claims,
+                expires:            DateTime.UtcNow.AddHours(hours),
                 signingCredentials: creds
             );
 
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                userName = user.FullName
-            });
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         public record SendOtpRequest(string Phone);

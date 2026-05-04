@@ -1,48 +1,109 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@ViewData["Title"] - SaigonRide.App</title>
+    <title>@ViewData["Title"] - SaigonRide</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/identity.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/SaigonRide.App.styles.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/css/identity.css" />
+    <style>
+        body { background-color: #F8F9FA; font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+        .sr-nav {
+            background: #fff;
+            border-bottom: 2px solid #E0E0E0;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sr-nav-brand {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #2A5C43;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+        .sr-nav-brand:hover { color: #2A5C43; }
+        .sr-nav-brand span  { color: #111; }
+
+        .sr-nav-links { display: flex; align-items: center; gap: 8px; }
+
+        .sr-nav-link {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sr-nav-link:hover       { background: #F0F7F3; color: #2A5C43; }
+        .sr-nav-link.active      { background: #F0F7F3; color: #2A5C43; }
+        .sr-nav-link.btn-nav     { background: #2A5C43; color: #fff; margin-left: 8px; }
+        .sr-nav-link.btn-nav:hover { background: #234e39; color: #fff; }
+        .sr-nav-link.btn-logout  { color: #D84315; }
+        .sr-nav-link.btn-logout:hover { background: #FBE9E7; color: #D84315; }
+
+        .sr-main   { min-height: calc(100vh - 64px - 56px); }
+        .sr-footer {
+            border-top: 1px solid #E0E0E0;
+            padding: 16px 32px;
+            font-size: 0.85rem;
+            color: #999;
+            text-align: center;
+        }
+        .sr-footer a { color: #2A5C43; text-decoration: none; font-weight: 600; }
+    </style>
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-        <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SaigonRide.App</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-</header>
-<div class="container">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
+
+<nav class="sr-nav">
+    <a class="sr-nav-brand" asp-area="" asp-controller="Home" asp-action="Index">
+        🚇 SAIGON<span>RIDE</span>
+    </a>
+
+    <div class="sr-nav-links">
+        <a class="sr-nav-link" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class="sr-nav-link" asp-area="" asp-controller="Kiosk" asp-action="Index">Kiosk</a>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="sr-nav-link" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="sr-nav-link" asp-area="" asp-controller="Admin" asp-action="Index">Admin</a>
+            }
+
+            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" style="display:inline;">
+                <button type="submit" class="sr-nav-link btn-logout" style="border:none;background:none;cursor:pointer;">
+                    Đăng xuất (@User.Identity.Name?.Split('@')[0])
+                </button>
+            </form>
+        }
+        else
+        {
+            <a class="sr-nav-link" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a>
+            <a class="sr-nav-link btn-nav" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a>
+        }
+    </div>
+</nav>
+
+<div class="sr-main">
+    @RenderBody()
 </div>
 
-<footer class="border-top footer text-muted">
-    <div class="container">
-        &copy; 2026 - SaigonRide.App - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-    </div>
+<footer class="sr-footer">
+    &copy; 2026 SaigonRide —
+    <a asp-area="" asp-controller="Home" asp-action="Privacy">Chính sách</a>
 </footer>
+
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>

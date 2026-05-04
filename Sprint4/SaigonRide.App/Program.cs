@@ -11,9 +11,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddMemoryCache();
 
-// --- 1. Database Configuration ---
+// --- 1. Database ---
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
@@ -23,7 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     string connStr;
     if (databaseUrl.StartsWith("postgresql://") || databaseUrl.StartsWith("postgres://"))
     {
-        var uri = new Uri(databaseUrl);
+        var uri      = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':', 2);
         connStr = new Npgsql.NpgsqlConnectionStringBuilder
         {
@@ -39,16 +40,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     {
         connStr = databaseUrl;
     }
-
     options.UseNpgsql(connStr);
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// --- 2. Identity & Security ---
+// --- 2. Identity ---
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Password.RequireDigit           = false;
+        options.SignIn.RequireConfirmedAccount   = false;
+        options.Password.RequireDigit            = false;
         options.Password.RequireNonAlphanumeric  = false;
     })
     .AddRoles<IdentityRole>()
@@ -56,21 +56,23 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.LoginPath  = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+
     options.Events.OnRedirectToLogin = context =>
     {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        if (context.Request.Path.StartsWithSegments("/api"))
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        else
+            context.Response.Redirect(context.RedirectUri);
         return Task.CompletedTask;
     };
 });
 
-// --- JWT ---
+// --- 3. JWT ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
-    })
+builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -85,25 +87,24 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-// --- 3. Stripe ---
+// --- 4. Stripe ---
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-// --- 4. Custom Services ---
+// --- 5. Custom Services ---
 builder.Services.AddScoped<SepayService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
 builder.Services.AddHostedService<StationUtilisationWorker>();
 
-// --- 5. MVC ---
+// --- 6. MVC ---
 builder.Services.AddControllersWithViews();
 
-// ── BUILD ────────────────────────────────────────────────────────────────────
+// ── BUILD ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// --- 6. Middleware Pipeline ---
 app.UseDeveloperExceptionPage();
 
-// Raw body buffering for Stripe webhook — before UseRouting
+// Raw body buffering for Stripe webhook — must be before UseRouting
 app.Use(async (ctx, next) =>
 {
     ctx.Request.EnableBuffering();
@@ -120,7 +121,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-// --- 7. Migrate & Seed ---
+// ── Migrate & Seed ────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

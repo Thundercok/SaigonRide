@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -25,7 +26,7 @@ public class StripeController : ControllerBase
     }
 
     [HttpPost("create-checkout")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutRequest req)
     {
         var rental = await _db.Rentals.FindAsync(req.RentalId);

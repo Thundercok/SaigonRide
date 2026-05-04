@@ -99,6 +99,7 @@ async function handleStripeCheckout() {
     const btn = $('btnStripe');
     if (btn) { btn.disabled = true; btn.textContent = 'ĐANG XỬ LÝ...'; }
 
+    let rentalStarted = false;
     try {
         const { ok: startOk, data: startData } = await ApiClient.startRental(KioskState.selectedVehicleId, KioskState.userToken);
         if (!startOk) {
@@ -106,6 +107,7 @@ async function handleStripeCheckout() {
             return;
         }
         KioskState.currentRentalId = startData.rentalId;
+        rentalStarted = true;
 
         const { ok: checkoutOk, data: checkoutData } = await ApiClient.createStripeCheckout(
             KioskState.currentRentalId,
@@ -114,13 +116,26 @@ async function handleStripeCheckout() {
             KioskState.userToken
         );
         if (!checkoutOk) {
+            await cancelCurrentPendingRental();
             goToState('Error', { message: checkoutData.error || 'Không thể tạo phiên thanh toán.' });
             return;
         }
 
         window.location.href = checkoutData.url;
     } catch {
+        if (rentalStarted) await cancelCurrentPendingRental();
         goToState('Error', { message: 'Không thể kết nối Stripe.' });
+    }
+}
+
+async function cancelCurrentPendingRental() {
+    if (!KioskState.currentRentalId) return;
+    try {
+        await ApiClient.cancelRental(KioskState.currentRentalId, KioskState.userToken);
+    } catch {
+        // The timeout worker will clean up any pending rental if this best-effort call fails.
+    } finally {
+        KioskState.currentRentalId = null;
     }
 }
 

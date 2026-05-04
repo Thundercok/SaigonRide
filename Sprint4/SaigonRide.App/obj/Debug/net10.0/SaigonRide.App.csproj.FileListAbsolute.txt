@@ -699,9 +699,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Npgsql.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Stripe.net.dll
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-hpw2wzaw8q-hpw2wzaw8q.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-acx0mai56a-acx0mai56a.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-inoc0l3pin-inoc0l3pin.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.AspNetCore.Razor.Language.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.CodeAnalysis.CSharp.Features.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.CodeAnalysis.Elfie.dll
@@ -816,3 +813,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/zh-Hant/Microsoft.CodeAnalysis.Scripting.resources.dll
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/fvvx5llyqd-{0}-s0tbzq41hs-s0tbzq41hs.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-sttt05gfcu-sttt05gfcu.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-zau6oi9wxz-zau6oi9wxz.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-0p80y8tupz-0p80y8tupz.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-0sqxcypyms-0sqxcypyms.gz

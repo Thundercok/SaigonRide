@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         KioskState.currentState = name;
         resetIdleTimer();
         onEnter[name]?.(payload);
+        window.kioskReady = true;
     }
 
     // expose globally so ui-interactions.js can call it
@@ -140,8 +141,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (qrImg) { qrImg.src = qrUrl ?? ''; qrImg.style.display = qrUrl ? 'block' : 'none'; }
             startCountdown(900);
             startPolling(rentalId);
-            $('btnCancelRental')?.addEventListener('click', () => {
+            $('btnCancelRental')?.addEventListener('click', async () => {
                 stopAll();
+                await cancelCurrentPendingRental();
                 goToState('Idle');
             }, { once: true });
         },

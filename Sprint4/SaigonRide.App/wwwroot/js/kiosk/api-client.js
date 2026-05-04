@@ -58,6 +58,14 @@ const ApiClient = {
         return res.json();
     },
 
+    async cancelRental(rentalId, token) {
+        const res = await fetch(`/api/rentals/${rentalId}/cancel`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return { ok: res.ok, data: await res.json() };
+    },
+
     async createStripeCheckout(rentalId, depositAmountVnd, baseUrl, token) {
         const res = await fetch('/api/payment/stripe/create-checkout', {
             method: 'POST',
