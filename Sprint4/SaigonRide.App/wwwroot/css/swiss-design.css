@@ -340,3 +340,122 @@ body {
     color: #64748b;
     font-weight: 500;
 }
+/* --- IDENTITY PAGES DESIGN SYSTEM --- */
+.identity-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh; /* Allows it to center inside _Layout without overriding it */
+    background-color: #F8F9FA;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.identity-card {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    max-width: 440px;
+    width: 100%;
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+
+.identity-card h1 {
+    color: #111;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.identity-card h2 {
+    color: #666;
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #111;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.kiosk-input {
+    width: 100%;
+    padding: 18px 22px;
+    border: 2px solid #D1DED5;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #111;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.kiosk-input:focus {
+    outline: none;
+    border-color: #2A5C43;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    accent-color: #2A5C43;
+}
+
+.action-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.action-btn.btn-primary {
+    background-color: #2A5C43;
+    color: #FFFFFF;
+}
+
+.action-btn.btn-secondary {
+    background-color: #F8F9FA;
+    color: #111;
+    border: 2px solid #D1DED5;
+    margin-top: 12px;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+}
+
+.error-msg {
+    color: #D32F2F; /* Keeps errors a standard red so they are visible */
+    font-size: 14px;
+    margin-top: 6px;
+    display: block;
+    font-weight: 500;
+}
+.error-msg ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
