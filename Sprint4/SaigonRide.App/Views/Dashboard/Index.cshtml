@@ -1,0 +1,151 @@
+@model SaigonRide.App.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<style>
+    .dashboard-wrap    { max-width: 960px; margin: 48px auto; padding: 0 24px; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .dash-greeting     { font-size: 2rem; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .dash-sub          { font-size: 1rem; color: #666; margin-bottom: 40px; }
+
+    /* Cards */
+    .card              { background: #fff; border: 1px solid #E0E0E0; border-radius: 12px; padding: 28px 32px; margin-bottom: 28px; }
+    .card-title        { font-size: 0.8rem; font-weight: 700; color: #2A5C43; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; }
+
+    /* Active rental */
+    .active-grid       { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .active-field      { display: flex; flex-direction: column; gap: 4px; }
+    .active-label      { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .active-value      { font-size: 1.3rem; font-weight: 800; color: #111; }
+    .active-value.green{ color: #2A5C43; font-size: 1.6rem; }
+    .active-plate      { display: inline-block; background: #F0F7F3; color: #2A5C43; border: 1.5px solid #2A5C43; border-radius: 6px; padding: 4px 14px; font-weight: 800; font-size: 1rem; margin-top: 4px; }
+
+    /* Map */
+    #stationMap        { width: 100%; height: 260px; border-radius: 10px; border: 1px solid #E0E0E0; margin-top: 16px; }
+
+    /* No active rental */
+    .no-rental         { text-align: center; padding: 20px 0; color: #888; font-size: 1rem; }
+    .no-rental a       { color: #2A5C43; font-weight: 700; text-decoration: none; }
+
+    /* History table */
+    table              { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    thead th           { text-align: left; font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 12px; border-bottom: 2px solid #E0E0E0; }
+    tbody td           { padding: 14px 0; border-bottom: 1px solid #F0F0F0; color: #333; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    .status-pill       { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .status-Completed  { background: #E8F5E9; color: #2A5C43; }
+    .status-Cancelled  { background: #FBE9E7; color: #D84315; }
+    .status-Active     { background: #E3F2FD; color: #1565C0; }
+    .cost              { font-weight: 700; color: #111; }
+    .empty-history     { text-align: center; color: #aaa; padding: 32px 0; font-size: 0.95rem; }
+</style>
+
+<div class="dashboard-wrap">
+    <p class="dash-greeting">Xin chào, @Model.UserName 👋</p>
+    <p class="dash-sub">Chào mừng trở lại SaigonRide.</p>
+
+    <!-- ── Active Rental ── -->
+    <div class="card">
+        <div class="card-title">🛵 Chuyến đi hiện tại</div>
+
+        @if (Model.ActiveRental != null)
+        {
+            var r = Model.ActiveRental;
+            <div class="active-grid">
+                <div class="active-field">
+                    <span class="active-label">Xe</span>
+                    <span class="active-value">@r.VehicleName</span>
+                    <span class="active-plate">@r.LicensePlate</span>
+                </div>
+                <div class="active-field">
+                    <span class="active-label">Thời gian đã đi</span>
+                    <span class="active-value green" id="elapsedTimer">@r.ElapsedTime</span>
+                </div>
+                <div class="active-field">
+                    <span class="active-label">Trạm xuất phát</span>
+                    <span class="active-value">@r.StartStationName</span>
+                </div>
+                <div class="active-field">
+                    <span class="active-label">Giá thuê</span>
+                    <span class="active-value">@r.HourlyRate.ToString("N0") VNĐ/giờ</span>
+                </div>
+            </div>
+
+            <!-- Leaflet map -->
+            <div id="stationMap"></div>
+
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const lat = @r.StartStationLat;
+                    const lng = @r.StartStationLng;
+                    const map = L.map('stationMap').setView([lat, lng], 16);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap'
+                    }).addTo(map);
+                    L.marker([lat, lng])
+                        .addTo(map)
+                        .bindPopup('<b>@r.StartStationName</b><br>Trạm xuất phát')
+                        .openPopup();
+                });
+
+                // Live elapsed timer
+                let startTime = new Date('@r.StartTime.ToString("o")');
+                function tick() {
+                    let diff = Math.floor((Date.now() - startTime) / 1000);
+                    let h = Math.floor(diff / 3600);
+                    let m = Math.floor((diff % 3600) / 60);
+                    let s = diff % 60;
+                    document.getElementById('elapsedTimer').textContent =
+                        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+                }
+                setInterval(tick, 1000);
+                tick();
+            </script>
+        }
+        else
+        {
+            <div class="no-rental">
+                Bạn chưa có chuyến đi nào đang hoạt động.<br/>
+                <a href="/Kiosk">Thuê xe tại kiosk →</a>
+            </div>
+        }
+    </div>
+
+    <!-- ── Rental History ── -->
+    <div class="card">
+        <div class="card-title">📋 Lịch sử chuyến đi</div>
+
+        @if (Model.History.Any())
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Xe</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Trạng thái</th>
+                        <th>Chi phí</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.History)
+                    {
+                        <tr>
+                            <td>@item.VehicleName</td>
+                            <td>@item.StartTime</td>
+                            <td>@(item.EndTime ?? "—")</td>
+                            <td><span class="status-pill status-@item.Status">@item.Status</span></td>
+                            <td class="cost">@item.TotalCost.ToString("N0") VNĐ</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-history">Chưa có lịch sử chuyến đi nào.</div>
+        }
+    </div>
+</div>

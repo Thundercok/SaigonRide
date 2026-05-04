@@ -1,8 +1,136 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "SaigonRide";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .home-wrap        { font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+    /* Hero */
+    .hero             { background: #2A5C43; color: #fff; padding: 100px 24px; text-align: center; }
+    .hero-brand       { font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+    .hero-title       { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+    .hero-title span  { color: #A8D5B5; }
+    .hero-sub         { font-size: 1.2rem; color: rgba(255,255,255,0.8); max-width: 560px; margin: 0 auto 40px; line-height: 1.6; }
+    .hero-cta         { display: inline-block; background: #fff; color: #2A5C43; font-weight: 800; font-size: 1.05rem; padding: 16px 36px; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+    .hero-cta:hover   { background: #F0F7F3; }
+
+    /* Stats */
+    .stats            { display: flex; justify-content: center; gap: 60px; padding: 60px 24px; background: #F8F9FA; border-bottom: 1px solid #E0E0E0; }
+    .stat             { text-align: center; }
+    .stat-num         { font-size: 2.5rem; font-weight: 900; color: #2A5C43; }
+    .stat-label       { font-size: 0.9rem; color: #666; font-weight: 600; margin-top: 4px; }
+
+    /* How it works */
+    .section          { max-width: 960px; margin: 0 auto; padding: 80px 24px; }
+    .section-label    { font-size: 0.8rem; font-weight: 700; color: #2A5C43; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+    .section-title    { font-size: 2.2rem; font-weight: 800; color: #111; margin-bottom: 48px; }
+    .steps            { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .step             { background: #fff; border: 1px solid #E0E0E0; border-radius: 12px; padding: 32px 28px; }
+    .step-num         { font-size: 2rem; font-weight: 900; color: #E0E0E0; margin-bottom: 16px; }
+    .step-title       { font-size: 1.1rem; font-weight: 800; color: #111; margin-bottom: 10px; }
+    .step-desc        { font-size: 0.95rem; color: #666; line-height: 1.6; }
+
+    /* Vehicles */
+    .vehicles-section { background: #F8F9FA; border-top: 1px solid #E0E0E0; border-bottom: 1px solid #E0E0E0; }
+    .vehicle-cards    { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .v-card           { background: #fff; border: 1px solid #E0E0E0; border-radius: 12px; padding: 28px; text-align: center; }
+    .v-icon           { font-size: 3rem; margin-bottom: 16px; }
+    .v-grade          { display: inline-block; background: #F0F7F3; color: #2A5C43; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; }
+    .v-name           { font-size: 1.1rem; font-weight: 800; color: #111; margin-bottom: 8px; }
+    .v-rate           { font-size: 0.95rem; color: #666; }
+    .v-rate strong    { color: #2A5C43; font-weight: 800; }
+
+    /* CTA bottom */
+    .cta-bottom       { text-align: center; padding: 80px 24px; }
+    .cta-bottom h2    { font-size: 2rem; font-weight: 800; color: #111; margin-bottom: 16px; }
+    .cta-bottom p     { color: #666; margin-bottom: 32px; font-size: 1rem; }
+    .btn-green        { display: inline-block; background: #2A5C43; color: #fff; font-weight: 800; font-size: 1.05rem; padding: 16px 36px; border-radius: 8px; text-decoration: none; margin-right: 12px; }
+    .btn-outline      { display: inline-block; background: transparent; color: #2A5C43; border: 2px solid #2A5C43; font-weight: 800; font-size: 1.05rem; padding: 14px 36px; border-radius: 8px; text-decoration: none; }
+</style>
+
+<div class="home-wrap">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-brand">🚇 SaigonRide</div>
+        <h1 class="hero-title">Di chuyển thông minh<br/><span>giữa lòng Sài Gòn</span></h1>
+        <p class="hero-sub">Thuê xe đạp và xe điện tại các trạm Metro. Nhanh chóng, tiện lợi, không cần đặt trước.</p>
+        <a href="/Identity/Account/Register" class="hero-cta">Đăng ký miễn phí →</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num">12</div>
+            <div class="stat-label">Trạm hoạt động</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">200+</div>
+            <div class="stat-label">Xe khả dụng</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">15K</div>
+            <div class="stat-label">VNĐ / giờ</div>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="section">
+        <div class="section-label">Hướng dẫn</div>
+        <div class="section-title">Thuê xe trong 3 bước</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-title">Đến trạm kiosk</div>
+                <div class="step-desc">Tìm kiosk SaigonRide tại các ga Metro. Nhập số điện thoại và xác thực OTP.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-title">Chọn xe & thanh toán</div>
+                <div class="step-desc">Chọn loại xe phù hợp. Thanh toán cọc qua VietQR hoặc thẻ quốc tế.</div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-title">Đi & trả xe</div>
+                <div class="step-desc">Lấy xe tại dock, đi đến điểm đến. Trả xe tại bất kỳ trạm SaigonRide nào.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicles -->
+    <div class="vehicles-section">
+        <div class="section">
+            <div class="section-label">Đội xe</div>
+            <div class="section-title">Chọn xe phù hợp với bạn</div>
+            <div class="vehicle-cards">
+                <div class="v-card">
+                    <div class="v-icon">🚲</div>
+                    <div class="v-grade">Grade C</div>
+                    <div class="v-name">Xe đạp thường</div>
+                    <div class="v-rate">Từ <strong>10.000 VNĐ</strong>/giờ</div>
+                </div>
+                <div class="v-card">
+                    <div class="v-icon">⚡</div>
+                    <div class="v-grade">Grade B</div>
+                    <div class="v-name">Xe đạp điện</div>
+                    <div class="v-rate">Từ <strong>12.000 VNĐ</strong>/giờ</div>
+                </div>
+                <div class="v-card">
+                    <div class="v-icon">🛵</div>
+                    <div class="v-grade">Grade A</div>
+                    <div class="v-name">Xe máy điện</div>
+                    <div class="v-rate">Từ <strong>15.000 VNĐ</strong>/giờ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-bottom">
+        <h2>Sẵn sàng xuất phát?</h2>
+        <p>Đăng ký tài khoản hoặc đến thẳng kiosk tại trạm gần nhất.</p>
+        <a href="/Identity/Account/Register" class="btn-green">Đăng ký ngay</a>
+        <a href="/Identity/Account/Login" class="btn-outline">Đăng nhập</a>
+    </div>
+
 </div>
