@@ -82,6 +82,7 @@ public class AdminController : Controller
     }
 
     [HttpPost("RefundUser")]
+    [HttpPost("RefundUser")]
     public async Task<IActionResult> RefundUser([FromBody] RefundRequest req)
     {
         var card = await _db.RideCards.FirstOrDefaultAsync(c => c.UserId == req.UserId);
@@ -104,7 +105,8 @@ public class AdminController : Controller
 
 public class RefundRequest 
 { 
-    public string UserId { get; set; } 
+    public string UserId { get; set; } = string.Empty;
     public decimal Amount { get; set; } 
-    public string Reason { get; set; } 
+    public string Reason { get; set; } = string.Empty;
 }
+
