@@ -82,7 +82,7 @@ public class WalletController : ControllerBase
                 Request.Headers["Stripe-Signature"],
                 _stripe.WebhookSecret);
 
-            if (stripeEvent.Type != EventTypes.CheckoutSessionCompleted)
+            if (stripeEvent.Type == Events.CheckoutSessionCompleted)
                 return Ok(new WalletWebhookResponse { Success = true, Message = "Ignored Stripe event." });
 
             var session = (Session)stripeEvent.Data.Object;

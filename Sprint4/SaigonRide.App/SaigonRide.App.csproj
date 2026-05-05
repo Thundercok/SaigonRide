@@ -4,53 +4,35 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>SaigonRide</RootNamespace>
-      <UserSecretsId>378ba61b-aafd-4dd7-b6c2-5666e8361de1</UserSecretsId>
-  </PropertyGroup>
+        <UserSecretsId>saigon-ride-app-v4</UserSecretsId>
+        <!-- Optional: If you want to allow warnings without failing the build locally -->
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
-        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.7" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0-preview.*" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.7" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.7" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0-preview.*" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
+        <!-- FIXED: Updated to 8.0.1 to satisfy JwtBearer dependency -->
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-*" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+
+        <!-- Core Packages -->
+        <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0-*" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0-*" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.0-*" />
+
+        <!-- Database & Tools -->
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-*" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0-*" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-*">
             <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-        <PackageReference Include="Stripe.net" Version="51.1.0" />
-    </ItemGroup>
 
-    <ItemGroup>
-      <Content Update="kiosk\ui-interactions.js">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <Content Update="kiosk\state-manager.js">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <Content Update="kiosk\api-client.js">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <Content Update="site.js">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.0-*" />
+        <PackageReference Include="Stripe.net" Version="45.0.0" />
     </ItemGroup>
 
 </Project>

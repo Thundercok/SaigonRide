@@ -1,10 +1,6 @@
 is_global = true
 build_property.TargetFramework = net10.0
 build_property.TargetFramework = net10.0
-build_property.TargetFrameworkIdentifier = .NETCoreApp
-build_property.TargetFrameworkIdentifier = .NETCoreApp
-build_property.TargetFrameworkVersion = v10.0
-build_property.TargetFrameworkVersion = v10.0
 build_property.TargetPlatformMinVersion = 
 build_property.TargetPlatformMinVersion = 
 build_property.UsingMicrosoftNETSdkWeb = true
@@ -19,8 +15,10 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property._SupportedPlatformList = Linux,macOS,Windows
-build_property.RootNamespace = SaigonRide
-build_property.RootNamespace = SaigonRide
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v10.0
+build_property.RootNamespace = SaigonRide.App
+build_property.RootNamespace = SaigonRide.App
 build_property.ProjectDir = /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
@@ -54,6 +52,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Areas/Identity/Pages/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXMvSWRlbnRpdHkvUGFnZXMvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Admin/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWRtaW4vSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Dashboard/Index.cshtml]

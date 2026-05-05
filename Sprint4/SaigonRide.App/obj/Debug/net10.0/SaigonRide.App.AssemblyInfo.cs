@@ -11,11 +11,11 @@ using System;
 using System.Reflection;
 
 [assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap5")]
-[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("378ba61b-aafd-4dd7-b6c2-5666e8361de1")]
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("saigon-ride-app-v4")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f30de5bf25c50a373244ee5a033224161bee435")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ebf2ac06301bee77ce102f2506c5c00e86800a0")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

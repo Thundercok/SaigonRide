@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema; // Add this at the top
 namespace SaigonRide.App.Models.Entities;
 
 public class Station
@@ -14,4 +15,10 @@ public class Station
     public ICollection<Rental> StartRentals { get; set; } = new List<Rental>();
     public ICollection<Rental> EndRentals { get; set; } = new List<Rental>();
     public ICollection<StationUtilisationLog> UtilisationLogs { get; set; } = new List<StationUtilisationLog>();
+    
+    [NotMapped]
+    public int AvailableBikes => Vehicles?.Count(v => v.Status == VehicleStatus.Available) ?? 0;
+
+    [NotMapped]
+    public int? FirstAvailableVehicleId => Vehicles?.FirstOrDefault(v => v.Status == VehicleStatus.Available)?.Id;
 }

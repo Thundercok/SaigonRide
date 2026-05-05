@@ -3,25 +3,46 @@ namespace SaigonRide.App.Models.Entities
     public class RideCardTransaction
     {
         public int Id { get; set; }
-        
-        // This is the explicit CardId the controller is looking for
-        public int CardId { get; set; } 
-        public virtual RideCard Card { get; set; } = null!;
+
+        public int RideCardId { get; set; }
+        public virtual RideCard RideCard { get; set; } = null!;
+
+        public int? RentalId { get; set; }
+        public virtual Rental? Rental { get; set; }
 
         public decimal Amount { get; set; }
-        
-        public TransactionType Type { get; set; }
-        
-        public string Reference { get; set; } = string.Empty;
-        
+        public decimal BalanceAfter { get; set; }
+        public RideCardTransactionType Type { get; set; }
+        public RideCardTransactionStatus Status { get; set; } = RideCardTransactionStatus.Pending;
+        public PaymentProvider Provider { get; set; } = PaymentProvider.Wallet;
+        public string? ExternalReference { get; set; }
+        public string? Note { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? ProcessedAt { get; set; }
     }
 
-    public enum TransactionType
+
+    public enum RideCardTransactionType
     {
         TopUp,
         FareDeduction,
         Refund,
         Adjustment
+    }
+
+    public enum RideCardTransactionStatus
+    {
+        Pending,
+        Completed,
+        Failed,
+        Cancelled
+    }
+
+    public enum PaymentProvider
+    {
+        Wallet,
+        Stripe,
+        SePay,
+        Admin
     }
 }

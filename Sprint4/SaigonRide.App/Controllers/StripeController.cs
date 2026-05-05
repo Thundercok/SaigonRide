@@ -81,8 +81,7 @@ public class StripeController : ControllerBase
                 _stripe.WebhookSecret
             );
 
-            if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
-            {
+            if (stripeEvent.Type == Events.CheckoutSessionCompleted)            {
                 var session = (Session)stripeEvent.Data.Object;
 
                 if (session.Metadata.TryGetValue("rental_id", out var rentalIdStr)

@@ -28,7 +28,6 @@ public class AdminController : Controller
                 s.Id,
                 s.Name,
                 s.Capacity,
-                // Count bikes physically at the station that are available
                 AvailableBikes = _db.Vehicles.Count(v => v.StationId == s.Id && v.Status == VehicleStatus.Available)
             }).ToListAsync();
 
@@ -43,7 +42,7 @@ public class AdminController : Controller
 
         // 3. Financials (Total fare deductions today)
         var dailyRevenue = await _db.RideCardTransactions
-            .Where(t => t.CreatedAt >= today && t.Type == TransactionType.FareDeduction)
+            .Where(t => t.CreatedAt >= today && t.Type == RideCardTransactionType.FareDeduction)
             .SumAsync(t => Math.Abs(t.Amount));
 
         ViewBag.Stations = stations;
@@ -53,8 +52,6 @@ public class AdminController : Controller
         return View();
     }
 
-    // --- QUICK ACTIONS ---
-
     [HttpPost("ForceEndRental/{id}")]
     public async Task<IActionResult> ForceEndRental(int id)
     {
@@ -63,7 +60,6 @@ public class AdminController : Controller
 
         rental.Status = RentalStatus.Completed;
         rental.EndTime = DateTime.UtcNow;
-        // Note: Administrative force-end waives the fare in this logic to prevent unfair charges on stuck bikes.
         
         await _db.SaveChangesAsync();
         return Ok(new { message = "Rental force-ended successfully." });
@@ -82,7 +78,6 @@ public class AdminController : Controller
     }
 
     [HttpPost("RefundUser")]
-    [HttpPost("RefundUser")]
     public async Task<IActionResult> RefundUser([FromBody] RefundRequest req)
     {
         var card = await _db.RideCards.FirstOrDefaultAsync(c => c.UserId == req.UserId);
@@ -91,11 +86,15 @@ public class AdminController : Controller
         card.Balance += req.Amount;
         
         _db.RideCardTransactions.Add(new RideCardTransaction {
-            CardId = card.Id,
+            RideCardId = card.Id,
             Amount = req.Amount,
-            Type = TransactionType.Refund,
+            BalanceAfter = card.Balance,
+            Type = RideCardTransactionType.Refund,
+            Status = RideCardTransactionStatus.Completed,
+            Provider = PaymentProvider.Admin,
+            Note = req.Reason,
             CreatedAt = DateTime.UtcNow,
-            Reference = req.Reason
+            ProcessedAt = DateTime.UtcNow
         });
 
         await _db.SaveChangesAsync();
@@ -109,4 +108,3 @@ public class RefundRequest
     public decimal Amount { get; set; } 
     public string Reason { get; set; } = string.Empty;
 }
-
