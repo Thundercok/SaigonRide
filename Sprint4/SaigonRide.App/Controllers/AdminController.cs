@@ -3,50 +3,108 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
-using SaigonRide.App.Models.ViewModels;
 
-namespace SaigonRide.App.Controllers
+namespace SaigonRide.App.Controllers;
+
+[Authorize(Roles = "Admin")]
+[Route("Admin")]
+public class AdminController : Controller
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize(Roles = "Admin")] // Only the seeded Admin can hit this
-    public class AdminController : ControllerBase
+    private readonly AppDbContext _db;
+
+    public AdminController(AppDbContext db)
     {
-        private readonly AppDbContext _context;
-
-        public AdminController(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        [HttpGet("fleet-overview")]
-        public async Task<IActionResult> GetFleetOverview()
-        {
-            var vehicles = await _context.Vehicles
-                .Include(v => v.Rentals.Where(r => r.Status == RentalStatus.Active))
-                .ThenInclude(r => r.User)
-                .ToListAsync();
-
-            var heldDeposits = await _context.Deposits
-                .Where(d => d.Status == DepositStatus.Held)
-                .SumAsync(d => d.Amount);
-
-            var overview = new FleetStatusViewModel
-            {
-                TotalVehicles = vehicles.Count,
-                CurrentlyRented = vehicles.Count(v => v.Status == VehicleStatus.Rented),
-                Available = vehicles.Count(v => v.Status == VehicleStatus.Available),
-                TotalDepositsHeld = heldDeposits,
-                VehicleDetails = vehicles.Select(v => new VehicleLocationSummary
-                {
-                    Name = v.Name,
-                    Plate = v.LicensePlate,
-                    Status = v.Status.ToString(),
-                    CurrentUser = v.Rentals.FirstOrDefault()?.User?.FullName
-                }).ToList()
-            };
-
-            return Ok(overview);
-        }
+        _db = db;
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Index()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        // 1. Station Metrics
+        var stations = await _db.Stations
+            .Select(s => new {
+                s.Id,
+                s.Name,
+                s.Capacity,
+                // Count bikes physically at the station that are available
+                AvailableBikes = _db.Vehicles.Count(v => v.StationId == s.Id && v.Status == VehicleStatus.Available)
+            }).ToListAsync();
+
+        // 2. Active Rentals
+        var activeRentals = await _db.Rentals
+            .Include(r => r.User)
+            .Include(r => r.Vehicle)
+            .Include(r => r.StartStation)
+            .Where(r => r.Status == RentalStatus.Active)
+            .OrderByDescending(r => r.StartTime)
+            .ToListAsync();
+
+        // 3. Financials (Total fare deductions today)
+        var dailyRevenue = await _db.RideCardTransactions
+            .Where(t => t.CreatedAt >= today && t.Type == TransactionType.FareDeduction)
+            .SumAsync(t => Math.Abs(t.Amount));
+
+        ViewBag.Stations = stations;
+        ViewBag.ActiveRentals = activeRentals;
+        ViewBag.DailyRevenue = dailyRevenue;
+
+        return View();
+    }
+
+    // --- QUICK ACTIONS ---
+
+    [HttpPost("ForceEndRental/{id}")]
+    public async Task<IActionResult> ForceEndRental(int id)
+    {
+        var rental = await _db.Rentals.FindAsync(id);
+        if (rental == null || rental.Status != RentalStatus.Active) return BadRequest("Invalid rental");
+
+        rental.Status = RentalStatus.Completed;
+        rental.EndTime = DateTime.UtcNow;
+        // Note: Administrative force-end waives the fare in this logic to prevent unfair charges on stuck bikes.
+        
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Rental force-ended successfully." });
+    }
+
+    [HttpPost("ToggleMaintenance/{id}")]
+    public async Task<IActionResult> ToggleMaintenance(int id)
+    {
+        var vehicle = await _db.Vehicles.FindAsync(id);
+        if (vehicle == null) return NotFound("Vehicle not found.");
+
+        vehicle.Status = vehicle.Status == VehicleStatus.Available ? VehicleStatus.Maintenance : VehicleStatus.Available;
+        await _db.SaveChangesAsync();
+        
+        return Ok(new { status = vehicle.Status.ToString() });
+    }
+
+    [HttpPost("RefundUser")]
+    public async Task<IActionResult> RefundUser([FromBody] RefundRequest req)
+    {
+        var card = await _db.RideCards.FirstOrDefaultAsync(c => c.UserId == req.UserId);
+        if (card == null) return BadRequest("User does not have a RideCard.");
+
+        card.Balance += req.Amount;
+        
+        _db.RideCardTransactions.Add(new RideCardTransaction {
+            CardId = card.Id,
+            Amount = req.Amount,
+            Type = TransactionType.Refund,
+            CreatedAt = DateTime.UtcNow,
+            Reference = req.Reason
+        });
+
+        await _db.SaveChangesAsync();
+        return Ok(new { newBalance = card.Balance });
+    }
+}
+
+public class RefundRequest 
+{ 
+    public string UserId { get; set; } 
+    public decimal Amount { get; set; } 
+    public string Reason { get; set; } 
 }

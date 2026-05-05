@@ -4,8 +4,7 @@ using NUnit.Framework;
 
 namespace SaigonRide.UITests;
 
-[Parallelizable(ParallelScope.Self)]
-[TestFixture]
+[Parallelizable(ParallelScope.None)] // CHANGED: Prevents DB race conditions for the single test user[TestFixture]
 
 
 public class KioskFlowTests : PageTest
@@ -187,15 +186,22 @@ public class KioskFlowTests : PageTest
         await NavigateToIdle();
         await Page.ClickAsync("#btnVietQR");
         await WaitForState("Active");
+        
         var qrImg = Page.Locator("#qrImage");
         await Expect(qrImg).ToBeVisibleAsync();
+        
         var src = await qrImg.GetAttributeAsync("src");
         Assert.That(src, Is.Not.Null.And.Not.Empty);
         await Expect(Page.Locator("#countdownTimer")).ToBeVisibleAsync();
-        await Page.ClickAsync("#btnCancelRental");
+        
+        // Ensure the cancel button is fully visible and interactable before tearing down
+        var cancelBtn = Page.Locator("#btnCancelRental");
+        await cancelBtn.WaitForAsync(new() { State = Microsoft.Playwright.WaitForSelectorState.Visible });
+        await cancelBtn.ClickAsync();
+        
         await WaitForState("Idle");
     }
-
+    
     [Test]
     public async Task Kiosk_Stripe_Redirects_To_Stripe_Checkout()
     {
@@ -242,8 +248,11 @@ public class KioskFlowTests : PageTest
         await Page.ClickAsync("#btnTouchToStart");
         await WaitForState("PhoneInput");
 
-        // Scope to active state to avoid clicking hidden back buttons
-        await Page.Locator("#paymentState_PhoneInput [data-back-to='Splash']").ClickAsync();
+        // Explicitly wait for the back button inside the active state to be visible
+        var backBtn = Page.Locator("#paymentState_PhoneInput [data-back-to='Splash']");
+        await backBtn.WaitForAsync(new() { State = Microsoft.Playwright.WaitForSelectorState.Visible });
+        await backBtn.ClickAsync();
+        
         await WaitForState("Splash");
     }
 
@@ -291,7 +300,10 @@ public class KioskFlowTests : PageTest
     {
         await Page.GotoAsync($"{BaseUrl}/Dashboard");
         await Page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.NetworkIdle);
+        
+        // DEBUG: Print the exact URL we landed on to the test console
+        Console.WriteLine($"[DEBUG] Landed on URL: {Page.Url}");
+        
         Assert.That(Page.Url, Does.Contain("Login").IgnoreCase);
     }
-    
 }

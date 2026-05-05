@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Models.Entities;
 
@@ -17,10 +18,28 @@ namespace SaigonRide.App.Data
         
         public DbSet<Station> Stations { get; set; }
         public DbSet<StationUtilisationLog> StationUtilisationLogs { get; set; }
+        public DbSet<RideCard> RideCards { get; set; }
+        public DbSet<RideCardTransaction> RideCardTransactions { get; set; }
         
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<IdentityUserLogin<string>>()
+                .Property(l => l.LoginProvider)
+                .HasMaxLength(128);
+
+            builder.Entity<IdentityUserLogin<string>>()
+                .Property(l => l.ProviderKey)
+                .HasMaxLength(128);
+
+            builder.Entity<IdentityUserToken<string>>()
+                .Property(t => t.LoginProvider)
+                .HasMaxLength(128);
+
+            builder.Entity<IdentityUserToken<string>>()
+                .Property(t => t.Name)
+                .HasMaxLength(128);
 
             builder.Entity<Rental>()
                 .HasOne(r => r.Deposit)
@@ -33,6 +52,51 @@ namespace SaigonRide.App.Data
                 .WithMany(u => u.Rentals)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RideCard>()
+                .HasOne(c => c.User)
+                .WithOne(u => u.RideCard)
+                .HasForeignKey<RideCard>(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RideCard>()
+                .HasIndex(c => c.UserId)
+                .IsUnique();
+
+            builder.Entity<RideCard>()
+                .Property(c => c.Balance)
+                .HasPrecision(18, 2);
+
+            builder.Entity<RideCard>()
+                .Property(c => c.Currency)
+                .HasMaxLength(3);
+
+            builder.Entity<RideCardTransaction>()
+                .HasOne(t => t.RideCard)
+                .WithMany(c => c.Transactions)
+                .HasForeignKey(t => t.RideCardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RideCardTransaction>()
+                .HasOne(t => t.Rental)
+                .WithMany()
+                .HasForeignKey(t => t.RentalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RideCardTransaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<RideCardTransaction>()
+                .Property(t => t.BalanceAfter)
+                .HasPrecision(18, 2);
+
+            builder.Entity<RideCardTransaction>()
+                .Property(t => t.ExternalReference)
+                .HasMaxLength(128);
+
+            builder.Entity<RideCardTransaction>()
+                .HasIndex(t => new { t.Provider, t.ExternalReference });
 
             builder.Entity<Rental>()
                 .HasOne(r => r.Vehicle)

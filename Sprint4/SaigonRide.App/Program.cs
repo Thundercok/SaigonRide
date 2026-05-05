@@ -93,6 +93,8 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 // --- 5. Custom Services ---
 builder.Services.AddScoped<SepayService>();
+builder.Services.AddScoped<WalletService>();
+builder.Services.AddScoped<RideService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
 builder.Services.AddHostedService<StationUtilisationWorker>();
 

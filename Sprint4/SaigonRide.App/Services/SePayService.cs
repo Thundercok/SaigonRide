@@ -15,11 +15,11 @@ namespace SaigonRide.App.Services
         // Hàm này sinh ra đường link ảnh QR Code
         public string GenerateQrUrl(decimal amount, int rentalId)
         {
-            // Các thông tin cố định (bạn có thể đưa BankId và AccountName vào appsettings sau nếu thích)
-            string bankId = "bidv"; 
-            string accountNumber = _config["Sepay:AccountNumber"] ?? "96247WXZRR";
-            string accountName = "BUI LE THUY QUYNH"; 
-            string template = "compact2"; // Layout chuẩn, đẹp cho Kiosk
+            string bankId = _config["Sepay:BankId"] ?? "bidv"; 
+            string accountNumber = _config["Sepay:AccountNumber"] 
+                                   ?? throw new InvalidOperationException("Missing Sepay:AccountNumber configuration.");
+            string accountName = _config["Sepay:AccountName"] ?? "SAIGONRIDE"; 
+            string template = _config["Sepay:Template"] ?? "compact2";
             
             // Nội dung chuyển khoản BẮT BUỘC phải map với Webhook (Ví dụ: "SGR 9")
             string content = $"SGR {rentalId}";
@@ -32,6 +32,21 @@ namespace SaigonRide.App.Services
             string qrUrl = $"https://img.vietqr.io/image/{bankId}-{accountNumber}-{template}.png?amount={(long)amount}&addInfo={encodedContent}&accountName={encodedName}";
 
             return qrUrl;
+        }
+
+        public string GenerateWalletTopUpQrUrl(decimal amount, int transactionId)
+        {
+            string bankId = _config["Sepay:BankId"] ?? "bidv";
+            string accountNumber = _config["Sepay:AccountNumber"]
+                                   ?? throw new InvalidOperationException("Missing Sepay:AccountNumber configuration.");
+            string accountName = _config["Sepay:AccountName"] ?? "SAIGONRIDE";
+            string template = _config["Sepay:Template"] ?? "compact2";
+            string content = $"SGRW {transactionId}";
+
+            string encodedContent = HttpUtility.UrlEncode(content);
+            string encodedName = HttpUtility.UrlEncode(accountName);
+
+            return $"https://img.vietqr.io/image/{bankId}-{accountNumber}-{template}.png?amount={(long)amount}&addInfo={encodedContent}&accountName={encodedName}";
         }
     }
 }
