@@ -1,16 +1,13 @@
-<!-- ══ 2. PHONE INPUT ══════════════════════════════════════════════ -->
-<div id="paymentState_PhoneInput" class="state-container" style="display:none;">
-    <h2 class="section-title">Nhập Số Điện Thoại</h2>
-    <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP để xác thực</p>
+<!-- ══ 2. EMAIL INPUT ═════════════════════════════════════════════ -->
+<div id="paymentState_EmailInput" class="state-container" style="display:none;">
+    <h2 class="section-title">Nhập Email</h2>
+    <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP tới email của bạn</p>
     <div class="input-group">
-        <input id="phoneInput" class="kiosk-input" type="tel"
-               placeholder="0901 234 567" maxlength="11" inputmode="numeric" />
-        <p id="phoneError" class="error-msg"></p>
+        <input id="emailInput" class="kiosk-input" type="email"
+               placeholder="your@email.com" autocomplete="off" />
+        <p id="emailError" class="error-msg"></p>
     </div>
-    
-    <partial name="_Numpad" model=' "phoneInput" ' />
-
-    <button id="btnSubmitPhone" class="action-btn btn-primary" style="margin-top:24px;">
+    <button id="btnSubmitEmail" class="action-btn btn-primary" style="margin-top:24px;">
         GỬI MÃ OTP →
     </button>
     <button class="action-btn btn-secondary" data-back-to="Splash" style="margin-top:12px;">
@@ -21,20 +18,17 @@
 <!-- ══ 3. OTP INPUT ════════════════════════════════════════════════ -->
 <div id="paymentState_OtpInput" class="state-container" style="display:none;">
     <h2 class="section-title">Nhập Mã OTP</h2>
-    <p class="section-subtitle">Mã 6 chữ số đã được gửi tới số điện thoại của bạn</p>
+    <p class="section-subtitle">Mã 6 chữ số đã được gửi tới email của bạn</p>
     <div class="input-group">
         <input id="otpInput" class="kiosk-input kiosk-input--otp" type="text"
                placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" />
         <p id="otpError" class="error-msg"></p>
     </div>
-    
-    <partial name="_Numpad" model=' "otpInput" ' />
-
+    <partial name="_Numpad" model='"otpInput"' />
     <button id="btnSubmitOtp" class="action-btn btn-primary" style="margin-top:24px;">
         XÁC NHẬN →
     </button>
-
-    <button class="action-btn btn-secondary" data-back-to="PhoneInput" style="margin-top:12px;">
+    <button class="action-btn btn-secondary" data-back-to="EmailInput" style="margin-top:12px;">
         ⬅ QUAY LẠI
     </button>
 </div>

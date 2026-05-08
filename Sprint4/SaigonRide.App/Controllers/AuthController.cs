@@ -97,59 +97,64 @@ namespace SaigonRide.App.Controllers
             return Ok(new { token = GenerateJwt(user, hours: 8) });
         }
 
-        [HttpPost("send-otp")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
+[HttpPost("send-otp")]
+[AllowAnonymous]
+public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
+{
+    var user = await _userManager.FindByEmailAsync(request.Email);
+    if (user == null)
+        return NotFound(new { message = "Email chưa được đăng ký." });
+
+    var otp = new Random().Next(100000, 999999).ToString();
+    _cache.Set($"otp:{request.Email}", otp, TimeSpan.FromMinutes(5));
+    Console.WriteLine($"[OTP] {request.Email} → {otp}");
+
+    var apiKey = _config["Resend:ApiKey"];
+    if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+        await http.PostAsJsonAsync("https://api.resend.com/emails", new
         {
-            var user = await _userManager.Users
-                .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
+            from    = _config["Resend:From"] ?? "SaigonRide <onboarding@resend.dev>",
+            to      = new[] { request.Email },
+            subject = "Mã OTP SaigonRide",
+            html    = $@"<div style='font-family:sans-serif;max-width:400px'>
+                           <h2>SaigonRide</h2>
+                           <p>Mã OTP của bạn:</p>
+                           <h1 style='letter-spacing:8px;color:#2A5C43'>{otp}</h1>
+                           <p style='color:#999'>Hiệu lực trong 5 phút.</p>
+                         </div>"
+        });
+    }
 
-            if (user == null)
-                return NotFound(new { message = "Số điện thoại chưa được đăng ký." });
+    return Ok(new { message = "OTP đã được gửi." });
+}
 
-            var otp = new Random().Next(100000, 999999).ToString();
-            _cache.Set($"otp:{request.Phone}", otp, TimeSpan.FromMinutes(5));
+[HttpPost("verify-otp")]
+[AllowAnonymous]
+public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+{
+    bool otpValid = false;
 
-            // Always log in dev so tests and manual testing can see it
-            Console.WriteLine($"[OTP] {request.Phone} → {otp}");
+    if (_env.IsDevelopment() && request.Otp == "123456")
+        otpValid = true;
+    else if (_cache.TryGetValue($"otp:{request.Email}", out string? stored) && stored == request.Otp)
+    {
+        otpValid = true;
+        _cache.Remove($"otp:{request.Email}");
+    }
 
-            return Ok(new { message = "OTP đã được gửi." });
-        }
+    if (!otpValid)
+        return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
 
-        [HttpPost("verify-otp")]
-        [AllowAnonymous]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
-        {
-            // ── Dev bypass — magic code for Playwright tests & local dev ──────
-            // Never active in Production (ASPNETCORE_ENVIRONMENT != Development)
-            bool otpValid = false;
+    var user = await _userManager.FindByEmailAsync(request.Email);
+    if (user == null) return Unauthorized();
 
-            if (_env.IsDevelopment() && request.Otp == "123456")
-            {
-                otpValid = true;
-            }
-            else if (_cache.TryGetValue($"otp:{request.Phone}", out string? storedOtp)
-                     && storedOtp == request.Otp)
-            {
-                otpValid = true;
-                _cache.Remove($"otp:{request.Phone}");
-            }
-
-            if (!otpValid)
-                return Unauthorized(new { message = "Mã OTP không đúng hoặc đã hết hạn." });
-            // ─────────────────────────────────────────────────────────────────
-
-            var user = await _userManager.Users
-                .FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
-
-            if (user == null) return Unauthorized();
-
-            return Ok(new
-            {
-                token    = GenerateJwt(user, hours: 2),
-                userName = user.FullName
-            });
-        }
+    return Ok(new { token = GenerateJwt(user, hours: 2), userName = user.FullName });
+}
 
         // ── Shared JWT factory ────────────────────────────────────────────────
         private string GenerateJwt(ApplicationUser user, int hours)
@@ -174,6 +179,7 @@ namespace SaigonRide.App.Controllers
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+            
         }
 
         public record SendOtpRequest(string Phone);

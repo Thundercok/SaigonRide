@@ -1,22 +1,18 @@
-// ui-interactions.js — DOM utilities, timers, RFID, polling, idle watchdog.
-// Depends on: KioskState (global), ApiClient (global), goToState (global)
+// ui-interactions.js
 
-// ── Shared state object (read/write by all files) ────────────────────────────
 const KioskState = {
-    kioskToken:       null,
-    userToken:        null,
-    currentRentalId:  null,
+    kioskToken:        null,
+    userToken:         null,
+    currentRentalId:   null,
     currentDepositAmt: 0,
-    otpPhone:         null,
-    currentState:     null,
+    otpEmail:          null,
+    currentState:      null,
     selectedVehicleId: null,
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const $  = id => document.getElementById(id);
-const fmt = n => n != null ? n.toLocaleString('vi-VN') + ' VNĐ' : 'N/A';
+const $   = id => document.getElementById(id);
+const fmt = n  => n != null ? n.toLocaleString('vi-VN') + ' VNĐ' : 'N/A';
 
-// ── Timers ───────────────────────────────────────────────────────────────────
 let timerInterval   = null;
 let pollingInterval = null;
 
@@ -34,7 +30,6 @@ function startCountdown(seconds) {
 }
 
 function startPolling(rentalId) {
-    console.log('[POLL] starting for rentalId:', rentalId);
     pollingInterval = setInterval(async () => {
         try {
             const data = await ApiClient.getRentalStatus(rentalId, KioskState.userToken);
@@ -75,7 +70,8 @@ function stopAll() {
     timerInterval = pollingInterval = null;
 }
 
-// ── Payment handlers ─────────────────────────────────────────────────────────
+// ── Payment handlers ──────────────────────────────────────────────────────────
+
 async function handleStartRental() {
     const btn = $('btnVietQR') ?? $('btnStartRental');
     if (btn) { btn.disabled = true; btn.textContent = 'ĐANG TẠO MÃ...'; }
@@ -84,13 +80,16 @@ async function handleStartRental() {
         const { ok, data } = await ApiClient.startRental(KioskState.selectedVehicleId, KioskState.userToken);
         console.log('[START] response:', JSON.stringify(data));
         if (ok) {
-            KioskState.currentRentalId = data.rentalId;
-            goToState('Active', { qrUrl: data.qrUrl, rentalId: data.rentalId });
+            // Defensive: handle both camelCase and PascalCase (Codex may have changed serialisation)
+            KioskState.currentRentalId = data.rentalId ?? data.RentalId ?? data.id ?? data.Id;
+            const qrUrl = data.qrUrl ?? data.QrUrl ?? data.qr_url ?? '';
+            goToState('Active', { qrUrl, rentalId: KioskState.currentRentalId });
         } else {
-            if ($('systemMessage')) $('systemMessage').textContent = data.message || 'Lỗi hệ thống.';
+            if ($('systemMessage')) $('systemMessage').textContent = data.message ?? data.Message ?? 'Lỗi hệ thống.';
             goToState('Idle');
         }
-    } catch {
+    } catch (err) {
+        console.error('[START] error:', err);
         goToState('Error', { message: 'Không thể kết nối máy chủ.' });
     }
 }
@@ -103,10 +102,10 @@ async function handleStripeCheckout() {
     try {
         const { ok: startOk, data: startData } = await ApiClient.startRental(KioskState.selectedVehicleId, KioskState.userToken);
         if (!startOk) {
-            goToState('Error', { message: startData.message || 'Không thể tạo thuê xe.' });
+            goToState('Error', { message: startData.message ?? startData.Message ?? 'Không thể tạo thuê xe.' });
             return;
         }
-        KioskState.currentRentalId = startData.rentalId;
+        KioskState.currentRentalId = startData.rentalId ?? startData.RentalId;
         rentalStarted = true;
 
         const { ok: checkoutOk, data: checkoutData } = await ApiClient.createStripeCheckout(
@@ -117,12 +116,15 @@ async function handleStripeCheckout() {
         );
         if (!checkoutOk) {
             await cancelCurrentPendingRental();
-            goToState('Error', { message: checkoutData.error || 'Không thể tạo phiên thanh toán.' });
+            goToState('Error', { message: checkoutData.error ?? 'Không thể tạo phiên thanh toán.' });
             return;
         }
 
+        // Persist rentalId across the page reload that Stripe causes
+        sessionStorage.setItem('sgr_stripe_rental', String(KioskState.currentRentalId));
         window.location.href = checkoutData.url;
-    } catch {
+    } catch (err) {
+        console.error('[STRIPE] error:', err);
         if (rentalStarted) await cancelCurrentPendingRental();
         goToState('Error', { message: 'Không thể kết nối Stripe.' });
     }
@@ -132,14 +134,11 @@ async function cancelCurrentPendingRental() {
     if (!KioskState.currentRentalId) return;
     try {
         await ApiClient.cancelRental(KioskState.currentRentalId, KioskState.userToken);
-    } catch {
-        // The timeout worker will clean up any pending rental if this best-effort call fails.
-    } finally {
-        KioskState.currentRentalId = null;
-    }
+    } catch { /* timeout worker will clean up */ }
+    finally { KioskState.currentRentalId = null; }
 }
 
-// ── Numpad ───────────────────────────────────────────────────────────────────
+// ── Numpad ────────────────────────────────────────────────────────────────────
 document.addEventListener('click', e => {
     const key = e.target.closest('.numpad-key');
     if (!key) return;
@@ -152,7 +151,7 @@ document.addEventListener('click', e => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
-// ── Back / Cancel buttons ────────────────────────────────────────────────────
+// ── Back / Cancel buttons ─────────────────────────────────────────────────────
 document.addEventListener('click', e => {
     const backBtn = e.target.closest('[data-back-to]');
     if (!backBtn) return;
@@ -165,7 +164,7 @@ document.addEventListener('click', e => {
     goToState(targetState);
 });
 
-// ── Idle timer ───────────────────────────────────────────────────────────────
+// ── Idle timer ────────────────────────────────────────────────────────────────
 let idleTimeout = null;
 const IDLE_LIMIT_MS = 60000;
 
@@ -173,7 +172,6 @@ function resetIdleTimer() {
     clearTimeout(idleTimeout);
     if (['Splash', 'Active', 'ReturnProcessing'].includes(KioskState.currentState)) return;
     idleTimeout = setTimeout(() => {
-        console.log('[SYSTEM] Idle timeout. Resetting kiosk.');
         stopAll();
         KioskState.userToken = null;
         goToState('Splash');
@@ -182,11 +180,11 @@ function resetIdleTimer() {
 document.addEventListener('click', resetIdleTimer);
 document.addEventListener('touchstart', resetIdleTimer);
 
-// ── RFID / EasyCard wedge ────────────────────────────────────────────────────
+// ── RFID wedge ────────────────────────────────────────────────────────────────
 let rfidBuffer  = '';
 let rfidTimeout = null;
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && rfidBuffer.length >= 8) {
         const cardId = rfidBuffer;
         rfidBuffer = '';
@@ -199,9 +197,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 async function handleRfidLogin(cardId) {
-    if (!['Splash', 'PhoneInput', 'OtpInput'].includes(KioskState.currentState)) return;
+    if (!['Splash', 'EmailInput', 'OtpInput'].includes(KioskState.currentState)) return;
     try {
-        console.log(`[RFID] Processing tap: ${cardId}`);
         const { ok, data } = await ApiClient.rfidLogin(cardId);
         if (ok) {
             KioskState.userToken = data.token;

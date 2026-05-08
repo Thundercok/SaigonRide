@@ -7,21 +7,21 @@ const ApiClient = {
         if (!res.ok) throw new Error('Kiosk token failed');
         return res.json();
     },
-
-    async sendOtp(phone) {
+    
+    async sendOtp(email) {
         const res = await fetch('/api/auth/send-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone })
+            body: JSON.stringify({ email })
         });
         return { ok: res.ok, data: await res.json() };
     },
 
-    async verifyOtp(phone, otp) {
+    async verifyOtp(email, otp) {
         const res = await fetch('/api/auth/verify-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone, otp })
+            body: JSON.stringify({ email, otp })
         });
         return { ok: res.ok, data: await res.json() };
     },

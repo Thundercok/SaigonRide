@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ebf2ac06301bee77ce102f2506c5c00e86800a0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f09798c8e3fb2654e15b8a0a5bbd8317e6a61364")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaigonRide.App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

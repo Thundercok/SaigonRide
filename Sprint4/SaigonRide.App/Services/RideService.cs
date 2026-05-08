@@ -134,17 +134,8 @@ public class RideService
         };
     }
 
-    private static decimal CalculateFare(Rental rental, DateTime endTime)
-    {
-        var duration = endTime - rental.StartTime!.Value;
-
-        if (rental.Mode == RentalMode.Daily)
-        {
-            var billedDays = Math.Max(1, (int)Math.Ceiling(duration.TotalDays));
-            return billedDays * rental.Vehicle.DailyRate;
-        }
-
-        var billedHours = Math.Max(1, (int)Math.Ceiling(duration.TotalHours));
-        return billedHours * rental.Vehicle.HourlyRate;
-    }
+    private static decimal CalculateFare(Rental rental, DateTime endTime) =>
+        rental.Mode == RentalMode.Daily
+            ? PricingEngine.CalculateDailyFare(rental.Vehicle.DailyRate, rental.StartTime!.Value, endTime)
+            : PricingEngine.CalculateHourlyFare(rental.Vehicle.HourlyRate, rental.StartTime!.Value, endTime);
 }

@@ -1,8 +1,7 @@
-// state-manager.js — state machine, onEnter handlers, boot sequence.
-// Depends on: KioskState, ApiClient, ui-interactions.js (all loaded before this)
+// state-manager.js
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const stationId = document.getElementById('kioskRoot')?.dataset.stationId;
+
     function goToState(name, payload = {}) {
         document.querySelectorAll('.state-container').forEach(el => el.style.display = 'none');
         const el = document.getElementById('paymentState_' + name);
@@ -14,32 +13,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.kioskReady = true;
     }
 
-    // expose globally so ui-interactions.js can call it
     window.goToState = goToState;
 
     const onEnter = {
 
         Splash: () => {
-            $('btnTouchToStart')?.addEventListener('click', () => goToState('PhoneInput'), { once: true });
+            $('btnTouchToStart')?.addEventListener('click', () => goToState('EmailInput'), { once: true });
             $('btnGoToReturn')?.addEventListener('click',  () => goToState('ReturnScan'),  { once: true });
         },
 
-        PhoneInput: () => {
-            $('phoneInput').value = '';
-            $('phoneError').textContent = '';
-            $('btnSubmitPhone')?.addEventListener('click', async () => {
-                const phone = $('phoneInput').value.trim();
-                if (!phone.match(/^(0|\+84)\d{8,10}$/)) {
-                    $('phoneError').textContent = 'Số điện thoại không hợp lệ.';
+        EmailInput: () => {
+            $('emailInput').value = '';
+            $('emailError').textContent = '';
+            $('btnSubmitEmail')?.addEventListener('click', async () => {
+                const email = $('emailInput').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    $('emailError').textContent = 'Email không hợp lệ.';
                     return;
                 }
-                KioskState.otpPhone = phone;
+                KioskState.otpEmail = email;
                 try {
-                    const { ok, data } = await ApiClient.sendOtp(phone);
-                    if (!ok) { $('phoneError').textContent = data.message || 'Không thể gửi OTP.'; return; }
+                    const { ok, data } = await ApiClient.sendOtp(email);
+                    if (!ok) { $('emailError').textContent = data.message || 'Không thể gửi OTP.'; return; }
                     goToState('OtpInput');
                 } catch {
-                    $('phoneError').textContent = 'Không thể gửi OTP. Thử lại.';
+                    $('emailError').textContent = 'Không thể gửi OTP. Thử lại.';
                 }
             }, { once: true });
         },
@@ -50,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             $('btnSubmitOtp')?.addEventListener('click', async () => {
                 const otp = $('otpInput').value.trim();
                 try {
-                    const { ok, data } = await ApiClient.verifyOtp(KioskState.otpPhone, otp);
+                    const { ok, data } = await ApiClient.verifyOtp(KioskState.otpEmail, otp);
                     if (ok) {
                         KioskState.userToken = data.token;
                         goToState('AuthSuccess', { userName: data.userName });
@@ -138,7 +136,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         Active: ({ qrUrl, rentalId } = {}) => {
             const qrImg = $('qrImage');
-            if (qrImg) { qrImg.src = qrUrl ?? ''; qrImg.style.display = qrUrl ? 'block' : 'none'; }
+            if (qrImg) {
+                qrImg.src = qrUrl ?? '';
+                qrImg.style.display = qrUrl ? 'block' : 'none';
+            }
             startCountdown(900);
             startPolling(rentalId);
             $('btnCancelRental')?.addEventListener('click', async () => {
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ── Boot ─────────────────────────────────────────────────────────────────
+    // ── Boot ──────────────────────────────────────────────────────────────────
     try {
         const data = await ApiClient.kioskToken();
         KioskState.kioskToken = data.token;
@@ -198,16 +199,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Handle redirect back from Stripe
     const urlParams       = new URLSearchParams(window.location.search);
     const stripeSession   = urlParams.get('stripe_session');
     const stripeRentalId  = urlParams.get('rental_id');
     const stripeCancelled = urlParams.get('stripe_cancelled');
 
     if (stripeSession && stripeRentalId) {
+        sessionStorage.removeItem('sgr_stripe_rental');
         history.replaceState({}, '', '/Kiosk');
-        KioskState.currentRentalId = stripeRentalId;
-        goToState('Active', { qrUrl: '', rentalId: stripeRentalId });
+        // Stripe webhook already activated rental — go straight to Success
+        goToState('Success', { vehicleId: `Rental #${stripeRentalId}`, dockId: 'Vui lòng lấy xe' });
     } else if (stripeCancelled && stripeRentalId) {
         history.replaceState({}, '', '/Kiosk');
         goToState('Idle', { error: 'Thanh toán bị hủy. Vui lòng thử lại.' });

@@ -1,72 +1,141 @@
-@model SaigonRide.App.Models.ViewModels.DashboardViewModel
+@using SaigonRide.App.Models.Entities
 @{
-    Layout = "_Layout"; // Assuming you have a standard layout linking identity
-    ViewData["Title"] = "My RideCard";
+    ViewData["Title"] = "Dashboard";
+    var balance      = (decimal)ViewBag.WalletBalance;
+    var activeRental = ViewBag.ActiveRental as Rental;
+    var rentals      = ViewBag.RecentRentals  as List<Rental> ?? new();
+    var txns         = ViewBag.RecentTransactions as List<RideCardTransaction> ?? new();
 }
 
-<!-- Link our specific mobile CSS -->
-<link rel="stylesheet" href="~/css/swiss-mobile.css" />
+<style>
+    .dash { max-width: 1100px; margin: 0 auto; padding: 32px 20px; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 24px; }
+    .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 8px; }
+    .card-value { font-size: 32px; font-weight: 700; color: #111; }
+    .card-sub   { font-size: 13px; color: #666; margin-top: 6px; }
+    .active-badge { display: inline-block; background: #d4edda; color: #155724; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .data-table th { font-size: 11px; text-transform: uppercase; color: #999; }
+    .status-chip { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+    .chip-active    { background: #d4edda; color: #155724; }
+    .chip-completed { background: #e2e3e5; color: #383d41; }
+    .chip-cancelled { background: #fde8e8; color: #c0392b; }
+    .chip-pending   { background: #fef3cd; color: #856404; }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin: 32px 0 12px; }
+    @@media (max-width: 640px) { .dash-grid { grid-template-columns: 1fr; } }
+</style>
 
-<div class="app-container">
-    <div class="brand-header">
-        SAIGONRIDE
-    </div>
+<div class="dash">
 
-    <!-- WALLET SECTION -->
-    <div class="swiss-card">
-        <h2>Virtual RideCard</h2>
-        <div class="balance-display" id="walletBalance">-- VND</div>
-        <button class="btn btn-outline" onclick="topUpWallet()">+ Top Up Balance</button>
-    </div>
-
-    <!-- ACTIVE RIDE SECTION (Hidden by default) -->
-    <div id="activeRideView" class="swiss-card hidden">
-        <h2>Current Ride</h2>
-        <div style="text-align: center; margin: 30px 0;">
-            <div style="font-size: 14px; color: #666;">Elapsed Time</div>
-            <div id="rideTimer" style="font-size: 48px; font-weight: bold; color: var(--primary);">00:00</div>
+    <div class="dash-grid">
+        <!-- Wallet Card -->
+        <div class="card" style="border-left: 4px solid #2A5C43;">
+            <div class="card-label">RideCard Balance</div>
+            <div class="card-value">@string.Format("{0:N0} ₫", balance)</div>
+            <div class="card-sub">
+                <a href="/Wallet" style="color:#2A5C43;font-weight:600;">Top Up →</a>
+            </div>
         </div>
-        <button class="btn btn-danger" onclick="stopRide()">End Ride & Pay</button>
+
+        <!-- Active Rental Card -->
+        @if (activeRental != null)
+        {
+            var duration = (DateTime.UtcNow - activeRental.StartTime!.Value).TotalMinutes;
+            <div class="card" style="border-left: 4px solid #1a3a5c;">
+                <div class="card-label">Active Rental <span class="active-badge">LIVE</span></div>
+                <div class="card-value" style="font-size:22px;">@activeRental.Vehicle.Name</div>
+                <div class="card-sub">
+                    Started @activeRental.StartTime?.ToString("HH:mm") at @activeRental.StartStation?.Name
+                    — @Math.Round(duration, 0) min ago
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card" style="border-left: 4px solid #ccc;">
+                <div class="card-label">Active Rental</div>
+                <div class="card-value" style="font-size:20px;color:#999;">No active ride</div>
+                <div class="card-sub">
+                    <a href="/Kiosk" style="color:#2A5C43;font-weight:600;">Rent at a Kiosk →</a>
+                </div>
+            </div>
+        }
     </div>
 
-    <!-- STATION LIST SECTION -->
-    <div id="stationView" class="swiss-card">
-        <h2>Nearby Stations</h2>
-        <ul class="station-list">
-            @if (Model.Stations != null && Model.Stations.Any())
-            {
-                foreach (var station in Model.Stations)
+    <!-- Recent Rentals -->
+    <h2>Recent Rentals</h2>
+    @if (!rentals.Any())
+    {
+        <p style="color:#999;">No rentals yet.</p>
+    }
+    else
+    {
+        <div class="card" style="padding:0;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Vehicle</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Duration</th>
+                        <th>Cost</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var r in rentals)
                 {
-                    <li class="station-item">
-                        <div class="station-info">
-                            <h3>@station.Name</h3>
-                            <p>@station.AvailableBikes bikes available</p>
-                        </div>
-                        <div>
-                            <!-- In a real app, user taps station to see bikes. We shortcut to rent the first available bike for the demo -->
-                            @if (station.AvailableBikes > 0)
-                            {
-                                <button class="btn btn-primary" style="padding: 10px 20px;" 
-                                        onclick="startRide(@station.Id, @station.FirstAvailableVehicleId)">
-                                    Rent
-                                </button>
-                            }
-                            else
-                            {
-                                <span style="color: var(--danger); font-weight: bold;">Empty</span>
-                            }
-                        </div>
-                    </li>
+                    var dur = r.StartTime.HasValue && r.EndTime.HasValue
+                        ? $"{(r.EndTime.Value - r.StartTime.Value).TotalMinutes:0} min"
+                        : r.StartTime.HasValue ? "Ongoing" : "—";
+                    var chipClass = r.Status switch {
+                        RentalStatus.Active    => "chip-active",
+                        RentalStatus.Completed => "chip-completed",
+                        RentalStatus.Cancelled => "chip-cancelled",
+                        _                      => "chip-pending"
+                    };
+                    <tr>
+                        <td style="color:#999;">#@r.Id</td>
+                        <td><strong>@r.Vehicle?.Name</strong></td>
+                        <td>@(r.StartStation?.Name ?? "—")</td>
+                        <td>@(r.EndStation?.Name ?? "—")</td>
+                        <td>@dur</td>
+                        <td>@(r.TotalCost.HasValue ? $"{r.TotalCost.Value:N0} ₫" : "—")</td>
+                        <td><span class="status-chip @chipClass">@r.Status</span></td>
+                    </tr>
                 }
-            }
-            else
-            {
-                <li class="station-item">No stations found nearby.</li>
-            }
-        </ul>
-    </div>
-</div>
+                </tbody>
+            </table>
+        </div>
+    }
 
-@section Scripts {
-    <script src="~/js/saigon-ride.js"></script>
-}
+    <!-- Recent Wallet Transactions -->
+    @if (txns.Any())
+    {
+        <h2>Recent Wallet Activity</h2>
+        <div class="card" style="padding:0;">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance After</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var t in txns)
+                {
+                    var amtColor = t.Amount >= 0 ? "#155724" : "#c0392b";
+                    var amtSign  = t.Amount >= 0 ? "+" : "";
+                    <tr>
+                        <td style="color:#999;">@t.CreatedAt.ToString("dd/MM HH:mm")</td>
+                        <td>@t.Type</td>
+                        <td style="color:@amtColor;font-weight:700;">@amtSign@t.Amount.ToString("N0") ₫</td>
+                        <td>@t.BalanceAfter.ToString("N0") ₫</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

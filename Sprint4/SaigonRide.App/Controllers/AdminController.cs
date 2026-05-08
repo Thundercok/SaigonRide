@@ -100,6 +100,52 @@ public class AdminController : Controller
         await _db.SaveChangesAsync();
         return Ok(new { newBalance = card.Balance });
     }
+    [HttpGet("UtilisationData")]
+    public async Task<IActionResult> UtilisationData()
+    {
+        var since = DateTime.UtcNow.AddHours(-24);
+        var logs = await _db.StationUtilisationLogs
+            .Include(l => l.Station)
+            .Where(l => l.HourSlot >= since)
+            .OrderBy(l => l.HourSlot)
+            .Select(l => new {
+                station        = l.Station.Name,
+                hour           = l.HourSlot.ToString("HH:mm"),
+                bikesAvailable = l.BikesAvailable,
+                capacity       = l.Capacity,
+                utilisation    = l.Capacity > 0
+                    ? Math.Round((double)(l.Capacity - l.BikesAvailable) / l.Capacity * 100, 1)
+                    : 0.0
+            })
+            .ToListAsync();
+
+        return Ok(logs);
+    }
+
+    [HttpGet("RebalancingRecommendations")]
+    public async Task<IActionResult> RebalancingRecommendations()
+    {
+        var stations = await _db.Stations
+            .Select(s => new {
+                s.Id, s.Name, s.Capacity,
+                Available = _db.Vehicles.Count(v => v.StationId == s.Id && v.Status == VehicleStatus.Available)
+            }).ToListAsync();
+
+        var recs = stations.Select(s => new {
+            s.Id, s.Name, s.Available, s.Capacity,
+            UtilisationPct = s.Capacity > 0
+                ? Math.Round((double)(s.Capacity - s.Available) / s.Capacity * 100, 1)
+                : 0.0,
+            Action   = s.Available == 0            ? "RESTOCK"
+                : s.Available == s.Capacity   ? "REDISTRIBUTE"
+                : "OK",
+            Priority = s.Available == 0                            ? "HIGH"
+                : s.Available < (int)(s.Capacity * 0.2)      ? "MEDIUM"
+                : "LOW"
+        }).OrderByDescending(s => s.UtilisationPct);
+
+        return Ok(recs);
+    }
 }
 
 public class RefundRequest 

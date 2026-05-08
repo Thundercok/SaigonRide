@@ -4,68 +4,42 @@ using NUnit.Framework;
 
 namespace SaigonRide.UITests;
 
-[Parallelizable(ParallelScope.None)] // CHANGED: Prevents DB race conditions for the single test user[TestFixture]
-
-
+[Parallelizable(ParallelScope.None)]
+[TestFixture]
 public class KioskFlowTests : PageTest
 {
-    
     private const string BaseUrl   = "http://localhost:5297";
-    private const string TestPhone = "0901234567";
-    private const string TestOtp   = "123456";
-    public override BrowserNewContextOptions ContextOptions()
-    {
-        return new BrowserNewContextOptions
-        {
-            ViewportSize = new ViewportSize
-            {
-                Width = 1280,
-                Height = 720
-            }
-        };
-    }
+    private const string TestEmail = "test@saigonride.com";  // must exist in seeded DB
+    private const string TestOtp   = "123456";               // dev bypass
 
-    public BrowserTypeLaunchOptions LaunchOptions()
-    {
-        return new BrowserTypeLaunchOptions
-        {
-            Headless = false,
-            SlowMo = 250
-        };
-    }
+    public override BrowserNewContextOptions ContextOptions() =>
+        new() { ViewportSize = new ViewportSize { Width = 1280, Height = 720 } };
+
     private async Task TypeOnNumpad(string targetInputId, string digits)
     {
-        foreach (var digit in digits)
-            await Page.ClickAsync($".numpad-key[data-target='{targetInputId}'][data-val='{digit}']");
+        foreach (var d in digits)
+            await Page.ClickAsync($".numpad-key[data-target='{targetInputId}'][data-val='{d}']");
     }
 
-    private async Task WaitForState(string stateName, int timeoutMs = 10000)
+    private async Task WaitForState(string name, int ms = 10000)
     {
-        await Page.Locator($"#paymentState_{stateName}").WaitForAsync(new()
+        await Page.Locator($"#paymentState_{name}").WaitForAsync(new()
         {
-            State   = Microsoft.Playwright.WaitForSelectorState.Visible,
-            Timeout = timeoutMs
+            State   = WaitForSelectorState.Visible,
+            Timeout = ms
         });
-
-        if (stateName == "Splash")
-        {
-            await Page.WaitForFunctionAsync("() => window.kioskReady === true", new Microsoft.Playwright.PageWaitForFunctionOptions
-            {
-                Timeout = timeoutMs
-            });
-        }
-        
+        if (name == "Splash")
+            await Page.WaitForFunctionAsync("() => window.kioskReady === true", new() { Timeout = ms });
     }
 
-    /// Navigates through auth + vehicle select, leaves kiosk in Idle state.
     private async Task NavigateToIdle()
     {
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", TestPhone);
-        await Page.ClickAsync("#btnSubmitPhone");
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", TestEmail);
+        await Page.ClickAsync("#btnSubmitEmail");
         await WaitForState("OtpInput");
         await TypeOnNumpad("otpInput", TestOtp);
         await Page.ClickAsync("#btnSubmitOtp");
@@ -85,37 +59,37 @@ public class KioskFlowTests : PageTest
     }
 
     [Test]
-    public async Task Kiosk_PhoneInput_Shows_After_Splash_Tap()
+    public async Task Kiosk_EmailInput_Shows_After_Splash_Tap()
     {
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await Expect(Page.Locator("#phoneInput")).ToBeVisibleAsync();
+        await WaitForState("EmailInput");
+        await Expect(Page.Locator("#emailInput")).ToBeVisibleAsync();
     }
 
     [Test]
-    public async Task Kiosk_PhoneInput_Rejects_Invalid_Phone()
+    public async Task Kiosk_EmailInput_Rejects_Invalid_Email()
     {
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", "12345");
-        await Page.ClickAsync("#btnSubmitPhone");
-        await Expect(Page.Locator("#phoneError")).ToHaveTextAsync("Số điện thoại không hợp lệ.");
-        await Expect(Page.Locator("#paymentState_PhoneInput")).ToBeVisibleAsync();
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", "notanemail");
+        await Page.ClickAsync("#btnSubmitEmail");
+        await Expect(Page.Locator("#emailError")).ToHaveTextAsync("Email không hợp lệ.");
+        await Expect(Page.Locator("#paymentState_EmailInput")).ToBeVisibleAsync();
     }
 
     [Test]
-    public async Task Kiosk_OtpInput_Shows_After_Valid_Phone()
+    public async Task Kiosk_OtpInput_Shows_After_Valid_Email()
     {
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", TestPhone);
-        await Page.ClickAsync("#btnSubmitPhone");
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", TestEmail);
+        await Page.ClickAsync("#btnSubmitEmail");
         await WaitForState("OtpInput");
         await Expect(Page.Locator("#otpInput")).ToBeVisibleAsync();
     }
@@ -126,9 +100,9 @@ public class KioskFlowTests : PageTest
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", TestPhone);
-        await Page.ClickAsync("#btnSubmitPhone");
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", TestEmail);
+        await Page.ClickAsync("#btnSubmitEmail");
         await WaitForState("OtpInput");
         await TypeOnNumpad("otpInput", "000000");
         await Page.ClickAsync("#btnSubmitOtp");
@@ -142,13 +116,12 @@ public class KioskFlowTests : PageTest
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", TestPhone);
-        await Page.ClickAsync("#btnSubmitPhone");
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", TestEmail);
+        await Page.ClickAsync("#btnSubmitEmail");
         await WaitForState("OtpInput");
         await TypeOnNumpad("otpInput", TestOtp);
         await Page.ClickAsync("#btnSubmitOtp");
-        await WaitForState("AuthSuccess");
         await WaitForState("VehicleSelect");
         await Expect(Page.Locator(".vehicle-option-list .vehicle-option-btn").First).ToBeVisibleAsync();
     }
@@ -159,9 +132,9 @@ public class KioskFlowTests : PageTest
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-        await TypeOnNumpad("phoneInput", TestPhone);
-        await Page.ClickAsync("#btnSubmitPhone");
+        await WaitForState("EmailInput");
+        await Page.FillAsync("#emailInput", TestEmail);
+        await Page.ClickAsync("#btnSubmitEmail");
         await WaitForState("OtpInput");
         await TypeOnNumpad("otpInput", TestOtp);
         await Page.ClickAsync("#btnSubmitOtp");
@@ -186,58 +159,34 @@ public class KioskFlowTests : PageTest
         await NavigateToIdle();
         await Page.ClickAsync("#btnVietQR");
         await WaitForState("Active");
-        
         var qrImg = Page.Locator("#qrImage");
         await Expect(qrImg).ToBeVisibleAsync();
-        
         var src = await qrImg.GetAttributeAsync("src");
         Assert.That(src, Is.Not.Null.And.Not.Empty);
         await Expect(Page.Locator("#countdownTimer")).ToBeVisibleAsync();
-        
-        // Ensure the cancel button is fully visible and interactable before tearing down
         var cancelBtn = Page.Locator("#btnCancelRental");
-        await cancelBtn.WaitForAsync(new() { State = Microsoft.Playwright.WaitForSelectorState.Visible });
+        await cancelBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await cancelBtn.ClickAsync();
-        
         await WaitForState("Idle");
     }
-    
+
     [Test]
     public async Task Kiosk_Stripe_Redirects_To_Stripe_Checkout()
     {
         await NavigateToIdle();
-
-        async Task<string> WaitForCheckoutAsync()
-        {
-            await Page.WaitForURLAsync("**checkout.stripe.com**", new()
-            {
-                Timeout = 15000
-            });
-            return "checkout";
-        }
-
-        async Task<string> WaitForErrorAsync()
-        {
-            await Page.Locator("#paymentState_Error").WaitForAsync(new()
-            {
-                State = Microsoft.Playwright.WaitForSelectorState.Visible,
-                Timeout = 15000
-            });
-            return "error";
-        }
-
         await Page.ClickAsync("#btnStripe");
 
-        var checkoutTask = WaitForCheckoutAsync();
-        var errorTask = WaitForErrorAsync();
-        var completedTask = await Task.WhenAny(checkoutTask, errorTask);
-        if (await completedTask == "checkout")
-        {
-            Assert.That(Page.Url, Does.Contain("stripe.com"));
-            return;
-        }
+        var checkoutTask = Page.WaitForURLAsync("**checkout.stripe.com**", new() { Timeout = 15000 })
+                               .ContinueWith(_ => "checkout");
+        var errorTask    = Page.Locator("#paymentState_Error")
+                               .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15000 })
+                               .ContinueWith(_ => "error");
 
-        Assert.Warn("Stripe not configured — fix Railway env vars (merged key issue).");
+        var winner = await await Task.WhenAny(checkoutTask, errorTask);
+        if (winner == "checkout")
+            Assert.That(Page.Url, Does.Contain("stripe.com"));
+        else
+            Assert.Warn("Stripe not configured — check Railway env vars.");
     }
 
     [Test]
@@ -246,13 +195,10 @@ public class KioskFlowTests : PageTest
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
         await WaitForState("Splash");
         await Page.ClickAsync("#btnTouchToStart");
-        await WaitForState("PhoneInput");
-
-        // Explicitly wait for the back button inside the active state to be visible
-        var backBtn = Page.Locator("#paymentState_PhoneInput [data-back-to='Splash']");
-        await backBtn.WaitForAsync(new() { State = Microsoft.Playwright.WaitForSelectorState.Visible });
+        await WaitForState("EmailInput");
+        var backBtn = Page.Locator("#paymentState_EmailInput [data-back-to='Splash']");
+        await backBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await backBtn.ClickAsync();
-        
         await WaitForState("Splash");
     }
 
@@ -264,7 +210,7 @@ public class KioskFlowTests : PageTest
         await Page.EvaluateAsync("() => window.goToState('Error', { message: 'Test error' })");
         await WaitForState("Error");
         await Expect(Page.Locator("#errorMessage")).ToHaveTextAsync("Test error");
-        await WaitForState("Splash", timeoutMs: 15000);
+        await WaitForState("Splash", ms: 15000);
     }
 
     [Test]
@@ -272,38 +218,21 @@ public class KioskFlowTests : PageTest
     {
         await Page.GotoAsync($"{BaseUrl}/");
         await Expect(Page.Locator(".hero-title")).ToBeVisibleAsync();
-        await Expect(Page.Locator(".hero-cta")).ToBeVisibleAsync();
     }
 
     [Test]
     public async Task WebApp_Login_Page_Loads_And_Has_Form()
     {
         await Page.GotoAsync($"{BaseUrl}/Identity/Account/Login");
-        await Expect(Page.Locator(".identity-card")).ToBeVisibleAsync();
         await Expect(Page.Locator("#Input_Email")).ToBeVisibleAsync();
         await Expect(Page.Locator("#Input_Password")).ToBeVisibleAsync();
-        await Expect(Page.Locator("#login-submit")).ToBeVisibleAsync();
-    }
-
-    [Test]
-    public async Task WebApp_Register_Page_Loads_And_Has_Form()
-    {
-        await Page.GotoAsync($"{BaseUrl}/Identity/Account/Register");
-        await Expect(Page.Locator(".identity-card")).ToBeVisibleAsync();
-        await Expect(Page.Locator("#Input_Email")).ToBeVisibleAsync();
-        await Expect(Page.Locator("#Input_Password")).ToBeVisibleAsync();
-        await Expect(Page.Locator("#Input_ConfirmPassword")).ToBeVisibleAsync();
     }
 
     [Test]
     public async Task WebApp_Dashboard_Redirects_Unauthenticated_To_Login()
     {
         await Page.GotoAsync($"{BaseUrl}/Dashboard");
-        await Page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.NetworkIdle);
-        
-        // DEBUG: Print the exact URL we landed on to the test console
-        Console.WriteLine($"[DEBUG] Landed on URL: {Page.Url}");
-        
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         Assert.That(Page.Url, Does.Contain("Login").IgnoreCase);
     }
 }

@@ -1,10 +1,9 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
-using SaigonRide.App.Models.ViewModels;
 
 namespace SaigonRide.App.Controllers;
 
@@ -12,73 +11,42 @@ namespace SaigonRide.App.Controllers;
 public class DashboardController : Controller
 {
     private readonly AppDbContext _db;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public DashboardController(AppDbContext db, UserManager<ApplicationUser> userManager)
-    {
-        _db          = db;
-        _userManager = userManager;
-    }
+    public DashboardController(AppDbContext db) => _db = db;
 
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // Active rental
+        var rideCard = await _db.RideCards
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
         var activeRental = await _db.Rentals
             .Include(r => r.Vehicle)
             .Include(r => r.StartStation)
-            .Where(r => r.UserId == user.Id && r.Status == RentalStatus.Active)
+            .Where(r => r.UserId == userId && r.Status == RentalStatus.Active)
             .FirstOrDefaultAsync();
 
-        ActiveRentalViewModel? activeVm = null;
-        if (activeRental != null && activeRental.StartTime.HasValue)
-        {
-            var elapsed = DateTime.UtcNow - activeRental.StartTime.Value;
-            activeVm = new ActiveRentalViewModel
-            {
-                RentalId          = activeRental.Id,
-                VehicleName       = activeRental.Vehicle.Name,
-                LicensePlate      = activeRental.Vehicle.LicensePlate,
-                StartStationName  = activeRental.StartStation.Name,
-                StartStationLat   = activeRental.StartStation.Latitude,
-                StartStationLng   = activeRental.StartStation.Longitude,
-                StartTime         = activeRental.StartTime.Value,
-                ElapsedTime       = $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}",
-                HourlyRate        = activeRental.Vehicle.HourlyRate,
-            };
-        }
-
-        // Last 10 completed/cancelled rentals
-        var history = await _db.Rentals
+        var recentRentals = await _db.Rentals
             .Include(r => r.Vehicle)
-            .Where(r => r.UserId == user.Id
-                     && (r.Status == RentalStatus.Completed || r.Status == RentalStatus.Cancelled))
-            .OrderByDescending(r => r.CreatedAt)
-            .Take(10)
-            .Select(r => new RentalHistoryViewModel
-            {
-                RentalId    = r.Id,
-                VehicleName = r.Vehicle.Name,
-                StartTime   = r.StartTime.HasValue
-                    ? r.StartTime.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                    : r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
-                EndTime     = r.EndTime.HasValue
-                    ? r.EndTime.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                    : null,
-                Status      = r.Status.ToString(),
-                TotalCost   = r.TotalCost,
-            })
+            .Include(r => r.StartStation)
+            .Include(r => r.EndStation)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.Id)
+            .Take(8)
             .ToListAsync();
 
-        var vm = new DashboardViewModel
-        {
-            UserName    = user.FullName ?? user.Email ?? "Khách",
-            ActiveRental = activeVm,
-            History      = history,
-        };
+        var recentTransactions = await _db.RideCardTransactions
+            .Where(t => t.RideCard.UserId == userId)
+            .OrderByDescending(t => t.Id)
+            .Take(5)
+            .ToListAsync();
 
-        return View(vm);
+        ViewBag.WalletBalance      = rideCard?.Balance ?? 0m;
+        ViewBag.ActiveRental       = activeRental;
+        ViewBag.RecentRentals      = recentRentals;
+        ViewBag.RecentTransactions = recentTransactions;
+
+        return View();
     }
 }
