@@ -387,9 +387,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-sttt05gfcu-sttt05gfcu.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/rg3pj19a7p-{0}-hxlmmz2k0o-hxlmmz2k0o.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pfapgn9xbu-{0}-61n19gt1b8-61n19gt1b8.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-zau6oi9wxz-zau6oi9wxz.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-0sqxcypyms-0sqxcypyms.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-0p80y8tupz-0p80y8tupz.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/p6qafu9ps3-{0}-7ed10j3hwv-7ed10j3hwv.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/qjtatsxm8b-{0}-fr7q2aak1r-fr7q2aak1r.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/wdin1svb8a-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -462,3 +459,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/SaigonRide.App.pdb
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/SaigonRide.App.genruntimeconfig.cache
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/ref/SaigonRide.App.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-mlzoll3i65-mlzoll3i65.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-dl1twn1012-dl1twn1012.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-k2ebc1ergi-k2ebc1ergi.gz

@@ -103,7 +103,7 @@
                         <td>@(r.StartStation?.Name ?? "—")</td>
                         <td>@(r.EndStation?.Name ?? "—")</td>
                         <td>@dur</td>
-                        <td>@(r.TotalCost.HasValue ? $"{r.TotalCost.Value:N0} ₫" : "—")</td>
+                        <td>@(r.TotalCost > 0 ? $"{r.TotalCost:N0} ₫" : "—")</td>
                         <td><span class="status-chip @chipClass">@r.Status</span></td>
                     </tr>
                 }

@@ -20,17 +20,16 @@ public class KioskFlowTests : PageTest
         foreach (var d in digits)
             await Page.ClickAsync($".numpad-key[data-target='{targetInputId}'][data-val='{d}']");
     }
-
     private async Task WaitForState(string name, int ms = 10000)
     {
-        await Page.Locator($"#paymentState_{name}").WaitForAsync(new()
-        {
-            State   = WaitForSelectorState.Visible,
-            Timeout = ms
-        });
+        await Page.Locator($"#paymentState_{name}").WaitForAsync(
+            new LocatorWaitForOptions
+            {
+                State   = WaitForSelectorState.Visible,
+                Timeout = ms
+            });
         if (name == "Splash")
-            await Page.WaitForFunctionAsync("() => window.kioskReady === true", new() { Timeout = ms });
-    }
+            await Page.WaitForFunctionAsync("() => window.kioskReady === true", options: new() { Timeout = ms });    }
 
     private async Task NavigateToIdle()
     {

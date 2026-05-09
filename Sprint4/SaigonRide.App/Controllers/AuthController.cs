@@ -181,8 +181,8 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
             return new JwtSecurityTokenHandler().WriteToken(token);
             
         }
-
-        public record SendOtpRequest(string Phone);
-        public record VerifyOtpRequest(string Phone, string Otp);
+// NEW
+        public record SendOtpRequest(string Email);
+        public record VerifyOtpRequest(string Email, string Otp);
     }
 }
