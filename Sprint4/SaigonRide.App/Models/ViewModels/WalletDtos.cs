@@ -33,10 +33,3 @@ public class WalletWebhookResponse
     public int? TransactionId { get; set; }
     public decimal? Balance { get; set; }
 }
-
-public record SePayWebhookPayload(
-    string content,
-    string transferType,
-    decimal transferAmount,
-    string referenceCode
-);

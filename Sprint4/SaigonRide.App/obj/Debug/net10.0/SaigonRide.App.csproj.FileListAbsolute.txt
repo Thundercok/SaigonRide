@@ -384,7 +384,6 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/yfc7ypekbg-{0}-mlv21k5csn-mlv21k5csn.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/fvvx5llyqd-{0}-s0tbzq41hs-s0tbzq41hs.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/gd56l3ws14-{0}-lugek5hnai-lugek5hnai.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-sttt05gfcu-sttt05gfcu.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/rg3pj19a7p-{0}-hxlmmz2k0o-hxlmmz2k0o.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pfapgn9xbu-{0}-61n19gt1b8-61n19gt1b8.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/p6qafu9ps3-{0}-7ed10j3hwv-7ed10j3hwv.gz
@@ -459,6 +458,7 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/SaigonRide.App.pdb
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/SaigonRide.App.genruntimeconfig.cache
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/ref/SaigonRide.App.dll
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-mlzoll3i65-mlzoll3i65.gz
-/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-dl1twn1012-dl1twn1012.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/pl6d8rxlrq-{0}-k2ebc1ergi-k2ebc1ergi.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/dyvknbj4sm-{0}-4lifivxvu1-4lifivxvu1.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/bed9l758v9-{0}-smkc6m4d2h-smkc6m4d2h.gz
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/afd86exzfc-{0}-ufqmpsq19t-ufqmpsq19t.gz

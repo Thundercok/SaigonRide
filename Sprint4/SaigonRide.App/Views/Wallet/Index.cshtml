@@ -3,11 +3,17 @@
     ViewData["Title"] = "Ví RideCard";
     var balance  = (decimal)ViewBag.Balance;
     var txns     = ViewBag.Transactions as List<RideCardTransaction> ?? new();
-    var flash    = ViewBag.Flash is (string type, string msg) f ? f : default;
+    (string type, string msg)? flash = null;
+    if (ViewBag.Flash != null)
+    {
+        var f = ((string, string))ViewBag.Flash;
+        flash = (f.Item1, f.Item2);
+    }
     var qrUrl    = ViewBag.SePayQrUrl   as string;
     var qrAmount = ViewBag.SePayAmount  as string;
     var qrRef    = ViewBag.SePayRef     as string;
 }
+
 
 <style>
     .wallet-wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px; font-family: 'Helvetica Neue', Arial, sans-serif; }
@@ -82,9 +88,9 @@
 
 <div class="wallet-wrap">
 
-    @if (flash != default)
+    @if (flash.HasValue)
     {
-        <div class="flash flash-@flash.type">@flash.msg</div>
+        <div class="flash flash-@flash.Value.type">@flash.Value.msg</div>
     }
 
     <!-- Balance -->
