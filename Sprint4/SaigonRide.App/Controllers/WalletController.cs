@@ -1,106 +1,87 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
+using SaigonRide.App.Data;
 using SaigonRide.App.Models.ViewModels;
 using SaigonRide.App.Services;
-using SaigonRide.App.Settings;
-using Stripe;
-using Stripe.Checkout;
 
 namespace SaigonRide.App.Controllers;
 
-[ApiController]
-[Route("api/wallet")]
-public class WalletController : ControllerBase
+[Authorize]
+public class WalletController : Controller
 {
+    private readonly AppDbContext _db;
     private readonly WalletService _walletService;
-    private readonly StripeSettings _stripe;
-    private readonly IConfiguration _config;
 
-    public WalletController(WalletService walletService, IOptions<StripeSettings> stripe, IConfiguration config)
+    public WalletController(AppDbContext db, WalletService walletService)
     {
+        _db = db;
         _walletService = walletService;
-        _stripe = stripe.Value;
-        _config = config;
     }
 
-    [HttpGet("balance")]
-    [Authorize]
-    public async Task<IActionResult> GetBalance(CancellationToken cancellationToken)
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var rideCard = await _walletService.GetOrCreateRideCardAsync(userId);
 
-        var rideCard = await _walletService.GetOrCreateRideCardAsync(userId, cancellationToken);
-        return Ok(new WalletBalanceResponse { Balance = rideCard.Balance, Currency = rideCard.Currency });
+        var transactions = await _db.RideCardTransactions
+            .Where(t => t.RideCard.UserId == userId)
+            .OrderByDescending(t => t.Id)
+            .Take(20)
+            .ToListAsync();
+
+        ViewBag.Balance      = rideCard.Balance;
+        ViewBag.Transactions = transactions;
+
+        var q = Request.Query;
+        if (q["topup"] == "success")   ViewBag.Flash = ("success", "Nạp tiền thành công! Số dư đã được cập nhật.");
+        else if (q["topup"] == "cancelled") ViewBag.Flash = ("error", "Thanh toán bị hủy.");
+
+        if (TempData["SePayQrUrl"] is string qrUrl)
+        {
+            ViewBag.SePayQrUrl  = qrUrl;
+            ViewBag.SePayAmount = TempData["SePayAmount"];
+            ViewBag.SePayRef    = TempData["SePayRef"];
+        }
+
+        if (TempData["ErrorMessage"] is string err)
+            ViewBag.Flash = ("error", err);
+
+        return View();
     }
 
-    [HttpPost("topup")]
-    [Authorize]
-    public async Task<IActionResult> TopUp([FromBody] WalletTopUpRequest request, CancellationToken cancellationToken)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TopUp([FromForm] decimal amount, [FromForm] string provider)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
+        var userId  = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
         try
         {
-            var response = await _walletService.CreateTopUpAsync(userId, request, cancellationToken);
-            return Ok(response);
+            var result = await _walletService.CreateTopUpAsync(userId, new WalletTopUpRequest
+            {
+                Amount   = amount,
+                Provider = provider,
+                BaseUrl  = baseUrl
+            });
+
+            if (provider.Equals("SePay", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["SePayQrUrl"]  = result.QrUrl;
+                TempData["SePayAmount"] = amount.ToString("N0");
+                TempData["SePayRef"]    = result.TransferContent;
+                return RedirectToAction(nameof(Index));
+            }
+
+            return Redirect(result.CheckoutUrl!);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Index));
         }
-    }
-
-    [HttpPost("webhook")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
-    {
-        if (Request.Headers.ContainsKey("Stripe-Signature"))
-            return await HandleStripeWebhook(cancellationToken);
-
-        if (!VerifySepaySignature())
-            return Unauthorized(new { message = "Invalid or missing API key" });
-
-        var payload = await Request.ReadFromJsonAsync<SePayWebhookPayload>(cancellationToken: cancellationToken);
-        if (payload == null) return BadRequest(new { message = "Invalid SePay payload" });
-
-        var result = await _walletService.CompleteSePayTopUpAsync(payload, cancellationToken);
-        return Ok(result);
-    }
-
-    private async Task<IActionResult> HandleStripeWebhook(CancellationToken cancellationToken)
-    {
-        var json = await new StreamReader(Request.Body).ReadToEndAsync(cancellationToken);
-
-        try
-        {
-            var stripeEvent = EventUtility.ConstructEvent(
-                json,
-                Request.Headers["Stripe-Signature"],
-                _stripe.WebhookSecret);
-
-            if (stripeEvent.Type == Events.CheckoutSessionCompleted)
-                return Ok(new WalletWebhookResponse { Success = true, Message = "Ignored Stripe event." });
-
-            var session = (Session)stripeEvent.Data.Object;
-            var result = await _walletService.CompleteStripeCheckoutAsync(session, cancellationToken);
-            return Ok(result);
-        }
-        catch (StripeException)
-        {
-            return BadRequest(new { message = "Invalid Stripe webhook signature" });
-        }
-    }
-
-    private bool VerifySepaySignature()
-    {
-        if (!Request.Headers.TryGetValue("Authorization", out var authHeader))
-            return false;
-
-        var expected = "Apikey " + _config["Sepay:WebhookSecret"];
-        return authHeader.ToString() == expected;
     }
 }

@@ -21,6 +21,6 @@ namespace SaigonRide.App.Models.Entities
         public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     }
 
-    public enum VehicleGrade { GradeA, GradeB, GradeC }
+    public enum VehicleGrade { GradeA = 2 , GradeB = 1, GradeC = 0 }
     public enum VehicleStatus { Available, Rented, Maintenance, OutOfService }
 }

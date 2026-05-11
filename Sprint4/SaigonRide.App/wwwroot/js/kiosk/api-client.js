@@ -36,7 +36,11 @@ const ApiClient = {
     },
 
     async getVehicles() {
-        const res = await fetch('/api/vehicles');
+        const stationId = document.getElementById('kioskRoot')?.dataset.stationId;
+        const url = stationId ? `/api/vehicles?stationId=${stationId}` : '/api/vehicles';
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${KioskState.kioskToken}` }
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
     },

@@ -1,175 +1,124 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Models.Entities;
 
-namespace SaigonRide.App.Data
+namespace SaigonRide.App.Data;
+
+public static class DbSeeder
 {
-    public static class DbSeeder
+    public static async Task SeedAsync(IServiceProvider services)
     {
-        public static async Task SeedDataAsync(IServiceProvider serviceProvider)
+        var db          = services.GetRequiredService<AppDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        await db.Database.MigrateAsync();
+
+        // ── Roles ────────────────────────────────────────────────────────────
+        foreach (var role in new[] { "Admin", "User" })
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+
+        // ── Admin user ───────────────────────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
         {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var context = serviceProvider.GetRequiredService<AppDbContext>();
-            var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
+            UserName    = "admin@saigonride.com",
+            Email       = "admin@saigonride.com",
+            FullName    = "Admin",
+            PhoneNumber = "0900000000",
+            EmailConfirmed = true,
+            CreatedAt   = DateTime.UtcNow
+        }, "Admin@SaigonRide99!", "Admin");
 
-            // Test user for Playwright
-            if (await userManager.FindByNameAsync("test@saigonride.com") == null)
+        // ── Kiosk service account ─────────────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
+        {
+            UserName    = "kiosk@saigonride.com",
+            Email       = "kiosk@saigonride.com",
+            FullName    = "Kiosk",
+            PhoneNumber = "0900000001",
+            EmailConfirmed = true,
+            CreatedAt   = DateTime.UtcNow
+        }, "Kiosk@Internal99!", "User");
+
+        // ── Test user (for Playwright) ────────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
+        {
+            UserName    = "test@saigonride.com",
+            Email       = "test@saigonride.com",
+            FullName    = "Test User",
+            PhoneNumber = "0901234567",
+            EmailConfirmed = true,
+            CreatedAt   = DateTime.UtcNow
+        }, "Test@SaigonRide99!", "User");
+
+        // ── Stations ──────────────────────────────────────────────────────────
+        if (!await db.Stations.AnyAsync())
+        {
+            var stations = new List<Station>
             {
-                var testUser = new ApplicationUser
-                {
-                    UserName    = "test@saigonride.com",
-                    Email       = "test@saigonride.com",
-                    PhoneNumber = "0901234567",
-                    FullName    = "Test User",
-                    EmailConfirmed = true
-                };
-                await userManager.CreateAsync(testUser, "Test123!");
-            }
-            // 1. Seed Roles
-            string[] roles = { "Admin", "Customer" };
-            foreach (var role in roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                }
-            }
-
-            // 2. Seed Default Admin User
-            if (await userManager.FindByEmailAsync("admin@saigonride.com") == null)
-            {
-                var adminUser = new ApplicationUser
-                {
-                    UserName = "admin@saigonride.com",
-                    Email = "admin@saigonride.com",
-                    FullName = "System Admin",
-                    EmailConfirmed = true // Skips the email verification step for dev
-                };
-                
-                var result = await userManager.CreateAsync(adminUser, "Admin123!"); // The default password
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(adminUser, "Admin");
-                }
-            }
-            // 3. Seed Kiosk System Account
-            string[] kioskRoles = { "Admin", "Customer", "Kiosk" };
-            foreach (var role in kioskRoles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
-            }
-
-            if (await userManager.FindByEmailAsync("kiosk@saigonride.com") == null)
-            {
-                var kioskUser = new ApplicationUser
-                {
-                    UserName = "kiosk@saigonride.com",
-                    Email = "kiosk@saigonride.com",
-                    FullName = "Kiosk System",
-                    EmailConfirmed = true
-                };
-                var result = await userManager.CreateAsync(kioskUser, "Kiosk@Internal99!");
-                if (result.Succeeded)
-                    await userManager.AddToRoleAsync(kioskUser, "Kiosk");
-            }
-
-            // 4. Seed Stations
-            if (!context.Stations.Any())
-            {
-                context.Stations.AddRange(
-                    new Station
-                    {
-                        Id        = 1,
-                        Name      = "Ton Duc Thang Hub",
-                        Address   = "7 Nguyen Huu Tho, Phuong Ben Thanh TP.HCM",
-                        Latitude  = 10.7725,
-                        Longitude = 106.6980,
-                        Capacity  = 20,
-                        IsActive  = true
-                    },
-                    new Station
-                    {
-                        Id        = 2,
-                        Name      = "Bình Thạnh Hub",
-                        Address   = "Depot Metro Line 1, Bình Thạnh, TP.HCM",
-                        Latitude  = 10.8009,
-                        Longitude = 106.7157,
-                        Capacity  = 15,
-                        IsActive  = true
-                    }
-                );
-                await context.SaveChangesAsync();
-            }
-
-            // 5. Seed Initial E-Bikes for the UI
-            if (!context.Vehicles.Any())
-            {
-                context.Vehicles.AddRange(
-                    new Vehicle 
-                    { 
-                        Name = "Wave Electric Alpha", 
-                        LicensePlate = "11-11 111111", 
-                        Grade = VehicleGrade.GradeA, 
-                        MarketValue = 1500000m,
-                        HourlyRate = 15000m,
-                        DailyRate = 100000m,
-                        StationId = 1
-                    },
-                    new Vehicle 
-                    { 
-                        Name = "Super Electric Dream", 
-                        LicensePlate = "11-11 11112", 
-                        Grade = VehicleGrade.GradeB, 
-                        MarketValue = 1200000m,
-                        HourlyRate = 12000m,
-                        DailyRate = 80000m,
-                        StationId = 1
-                    }
-                );
-                await context.SaveChangesAsync();
-            }
-
-            var unassignedVehicles = context.Vehicles.Where(v => v.StationId == null).ToList();
-            foreach (var vehicle in unassignedVehicles)
-            {
-                vehicle.StationId = 1;
-            }
-
-            if (unassignedVehicles.Count > 0)
-            {
-                await context.SaveChangesAsync();
-            }
-
-            if (env.IsDevelopment())
-            {
-                var testUser = await userManager.FindByNameAsync("test@saigonride.com");
-                if (testUser != null)
-                {
-                    var openTestRentals = context.Rentals
-                        .Where(r => r.UserId == testUser.Id
-                            && (r.Status == RentalStatus.Pending || r.Status == RentalStatus.Active))
-                        .ToList();
-
-                    foreach (var rental in openTestRentals)
-                    {
-                        rental.Status = RentalStatus.Cancelled;
-                        rental.EndTime ??= DateTime.UtcNow;
-
-                        var vehicle = context.Vehicles.Find(rental.VehicleId);
-                        if (vehicle != null)
-                        {
-                            vehicle.Status = VehicleStatus.Available;
-                            vehicle.StationId ??= 1;
-                        }
-                    }
-
-                    if (openTestRentals.Count > 0)
-                    {
-                        await context.SaveChangesAsync();
-                    }
-                }
-            }
+                new() { Name = "Bến Thành",        Address = "1 Công Trường Quách Thị Trang, Q.1",     Capacity = 20, IsActive = true, Latitude = 10.7721, Longitude = 106.6980 },
+                new() { Name = "Nguyễn Huệ",       Address = "Phố đi bộ Nguyễn Huệ, Q.1",              Capacity = 15, IsActive = true, Latitude = 10.7743, Longitude = 106.7030 },
+                new() { Name = "Bùi Viện",          Address = "Đường Bùi Viện, Q.1",                    Capacity = 12, IsActive = true, Latitude = 10.7676, Longitude = 106.6920 },
+                new() { Name = "Hồ Con Rùa",       Address = "Công viên Hồ Con Rùa, Q.3",              Capacity = 18, IsActive = true, Latitude = 10.7798, Longitude = 106.6967 },
+                new() { Name = "Landmark 81",       Address = "720A Điện Biên Phủ, Bình Thạnh",         Capacity = 25, IsActive = true, Latitude = 10.7950, Longitude = 106.7220 },
+                new() { Name = "Thảo Cầm Viên",    Address = "2 Nguyễn Bỉnh Khiêm, Q.1",              Capacity = 16, IsActive = true, Latitude = 10.7878, Longitude = 106.7055 },
+                new() { Name = "Phố Tây Bùi Viện", Address = "Bùi Viện - Đề Thám, Q.1",               Capacity = 10, IsActive = true, Latitude = 10.7671, Longitude = 106.6912 },
+                new() { Name = "Chợ Bến Thành",    Address = "Tứ giác Bến Thành, Q.1",                 Capacity = 20, IsActive = true, Latitude = 10.7726, Longitude = 106.6982 },
+            };
+            db.Stations.AddRange(stations);
+            await db.SaveChangesAsync();
         }
+
+        // ── Vehicles ──────────────────────────────────────────────────────────
+        if (!await db.Vehicles.AnyAsync())
+        {
+            var stations = await db.Stations.ToListAsync();
+            var rng      = new Random(42);
+            var vehicles = new List<Vehicle>();
+
+            var specs = new[]
+            {
+                (Name: "Standard Bike",     Grade: VehicleGrade.GradeC, HourlyRate: 15000m, DailyRate: 80000m,  MarketValue: 3_000_000m),
+                (Name: "E-Bike Pro",        Grade: VehicleGrade.GradeC, HourlyRate: 20000m, DailyRate: 100000m, MarketValue: 5_000_000m),
+                (Name: "E-Scooter City",    Grade: VehicleGrade.GradeB, HourlyRate: 35000m, DailyRate: 150000m, MarketValue: 12_000_000m),
+                (Name: "E-Scooter Sport",   Grade: VehicleGrade.GradeB, HourlyRate: 40000m, DailyRate: 170000m, MarketValue: 15_000_000m),
+                (Name: "VinFast Klara S",   Grade: VehicleGrade.GradeA, HourlyRate: 60000m, DailyRate: 250000m, MarketValue: 25_000_000m),
+            };
+
+            int plate = 1;
+            foreach (var station in stations)
+            {
+                // 2 vehicles per spec per station → decent fill
+                foreach (var spec in specs.Take(3))
+                {
+                    vehicles.Add(new Vehicle
+                    {
+                        Name         = spec.Name,
+                        LicensePlate = $"SGR-{plate++:D4}",
+                        Grade        = spec.Grade,
+                        HourlyRate   = spec.HourlyRate,
+                        DailyRate    = spec.DailyRate,
+                        MarketValue  = spec.MarketValue,
+                        Status       = VehicleStatus.Available,
+                        IsActive     = true,
+                        StationId    = station.Id
+                    });
+                }
+            }
+            db.Vehicles.AddRange(vehicles);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    private static async Task EnsureUser(
+        UserManager<ApplicationUser> um,
+        ApplicationUser user,
+        string password,
+        string role)
+    {
+        if (await um.FindByEmailAsync(user.Email!) != null) return;
+        var result = await um.CreateAsync(user, password);
+        if (result.Succeeded) await um.AddToRoleAsync(user, role);
     }
 }

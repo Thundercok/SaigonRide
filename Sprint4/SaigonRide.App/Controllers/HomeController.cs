@@ -1,25 +1,23 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using SaigonRide.App.Models;
 
 namespace SaigonRide.App.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
-    {
-        return View();
-    }
+    public IActionResult Index() => View();
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+    public IActionResult Privacy() => View();
 
+    [Route("Home/Error")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var feature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+        var reason  = Request.Query["reason"].ToString();
+
+        ViewBag.Reason  = reason;
+        ViewBag.Message = feature?.Error?.Message ?? "An unexpected error occurred.";
+        return View();
     }
-    
 }

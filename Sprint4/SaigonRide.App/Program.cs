@@ -1,146 +1,97 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
 using SaigonRide.App.Settings;
 using Stripe;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMemoryCache();
+// ── Database ──────────────────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- 1. Database ---
-builder.Services.AddDbContext<AppDbContext>(options =>
+// ── Identity ──────────────────────────────────────────────────────────────────
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(opt =>
 {
-    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
-                      ?? builder.Configuration["DATABASE_URL"]
-                      ?? builder.Configuration.GetConnectionString("DefaultConnection")
-                      ?? throw new InvalidOperationException("No connection string found.");
-    string connStr;
-    if (databaseUrl.StartsWith("postgresql://") || databaseUrl.StartsWith("postgres://"))
-    {
-        var uri      = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':', 2);
-        connStr = new Npgsql.NpgsqlConnectionStringBuilder
-        {
-            Host     = uri.Host,
-            Port     = uri.Port == -1 ? 5432 : uri.Port,
-            Database = uri.AbsolutePath.TrimStart('/'),
-            Username = userInfo[0],
-            Password = userInfo.Length > 1 ? userInfo[1] : "",
-            SslMode  = Npgsql.SslMode.Require,
-        }.ConnectionString;
-    }
-    else
-    {
-        connStr = databaseUrl;
-    }
-    options.UseNpgsql(connStr);
-});
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+    opt.Password.RequireDigit           = true;
+    opt.Password.RequiredLength         = 8;
+    opt.Password.RequireNonAlphanumeric = true;
+    opt.Password.RequireUppercase       = true;
+    opt.SignIn.RequireConfirmedAccount  = false;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders()
+.AddDefaultUI();
 
-// --- 2. Identity ---
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount   = false;
-        options.Password.RequireDigit            = false;
-        options.Password.RequireNonAlphanumeric  = false;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
-
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath  = "/Identity/Account/Login";
-    options.LogoutPath = "/Identity/Account/Logout";
-
-    options.Events.OnRedirectToLogin = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api"))
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        else
-            context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
-});
-
-// --- 3. JWT ---
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+// ── JWT ───────────────────────────────────────────────────────────────────────
+var jwt = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication()
-    .AddJwtBearer(options =>
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opt =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer           = true,
             ValidateAudience         = true,
             ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = jwtSettings["Issuer"],
-            ValidAudience            = jwtSettings["Audience"],
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+            ValidIssuer              = jwt["Issuer"],
+            ValidAudience            = jwt["Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(
+                                           Encoding.UTF8.GetBytes(jwt["Key"]!))
         };
     });
 
-// --- 4. Stripe ---
-builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
-StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+builder.Services.AddAuthorization();
 
-// --- 5. Custom Services ---
+// ── Stripe ────────────────────────────────────────────────────────────────────
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+
+// ── App services ──────────────────────────────────────────────────────────────
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<SepayService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<RideService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
 builder.Services.AddHostedService<StationUtilisationWorker>();
 
-// --- 6. MVC ---
+// ── MVC ───────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
-// ── BUILD ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-app.UseDeveloperExceptionPage();
-
-// Raw body buffering for Stripe webhook — must be before UseRouting
-app.Use(async (ctx, next) =>
+// ── Seed ──────────────────────────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
 {
-    ctx.Request.EnableBuffering();
-    await next();
-});
+    try { await DbSeeder.SeedAsync(scope.ServiceProvider); }
+    catch (Exception ex)
+    {
+        var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        log.LogError(ex, "DB seed failed.");
+    }
+}
 
+// ── Pipeline ──────────────────────────────────────────────────────────────────
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
-
-// ── Migrate & Seed ────────────────────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
-
-using (var scope = app.Services.CreateScope())
-{
-    try
-    {
-        await DbSeeder.SeedDataAsync(scope.ServiceProvider);
-    }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the DB.");
-    }
-}
 
 app.Run();
