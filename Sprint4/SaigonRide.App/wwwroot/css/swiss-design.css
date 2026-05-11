@@ -459,3 +459,149 @@ body {
     padding: 0;
     margin: 0;
 }
+/* ── Email Input (replaces phone numpad flow) ────────────────────────────── */
+.email-input-wrap {
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.kiosk-input-email {
+    width: 100%;
+    padding: 20px 24px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    border: 2px solid #D1DED5;
+    border-radius: 10px;
+    background: #F8F9FA;
+    color: #111;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+}
+.kiosk-input-email:focus {
+    border-color: #2A5C43;
+    background: #FFF;
+    box-shadow: 0 0 0 4px rgba(42, 92, 67, 0.08);
+}
+.kiosk-input-email::placeholder { color: #BEC8C0; font-weight: 500; }
+
+.email-hint {
+    font-size: 0.82rem;
+    color: #999;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.3px;
+}
+
+/* ── Splash enhancements ─────────────────────────────────────────────────── */
+.splash-time {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #111;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.splash-date {
+    font-size: 0.95rem;
+    color: #999;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+}
+.splash-ticker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #F0F7F3;
+    border: 1px solid #D1DED5;
+    border-radius: 8px;
+    padding: 10px 20px;
+    max-width: 420px;
+    width: 100%;
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+.ticker-label { font-size: 0.8rem; font-weight: 700; color: #2A5C43; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; }
+.ticker-text  { font-size: 0.9rem; color: #555; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.splash-cta-row { display: flex; gap: 16px; justify-content: center; width: 100%; max-width: 480px; }
+.splash-cta-row .action-btn { flex: 1; }
+
+/* ── Left panel live stats ───────────────────────────────────────────────── */
+.panel-live-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.panel-stat {
+    background: #FFF;
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid #E8EEE9;
+}
+.panel-stat-value { font-size: 1.5rem; font-weight: 900; color: #111; }
+.panel-stat-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.panel-stat-value.green  { color: #2A5C43; }
+.panel-stat-value.orange { color: #D84315; }
+
+/* ── Kiosk clock in left panel ───────────────────────────────────────────── */
+.panel-clock {
+    text-align: center;
+    padding: 14px;
+    background: #2A5C43;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    color: #FFF;
+}
+.panel-clock-time { font-size: 2rem; font-weight: 900; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.panel-clock-date { font-size: 0.75rem; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+/* ── Loading shimmer ─────────────────────────────────────────────────────── */
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Micro interactions ──────────────────────────────────────────────────── */
+.action-btn { position: relative; overflow: hidden; }
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(255,255,255,.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width .4s, height .4s, opacity .4s;
+    opacity: 0;
+}
+.action-btn:active::after { width: 300px; height: 300px; opacity: 1; transition: 0s; }
+
+/* ── Return states ───────────────────────────────────────────────────────── */
+.return-processing-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.processing-label { font-size: 1.1rem; color: #555; font-weight: 600; }
+
+/* ── Active state improvements ───────────────────────────────────────────── */
+.active-header {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 20px;
+}
+.active-ref {
+    font-size: 0.85rem; color: #999; margin-top: 4px; font-family: monospace;
+}
+.qr-wrapper {
+    position: relative;
+}
+.qr-badge {
+    position: absolute; top: -10px; right: -10px;
+    background: #2A5C43; color: #FFF;
+    font-size: 0.7rem; font-weight: 700; padding: 3px 8px;
+    border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}

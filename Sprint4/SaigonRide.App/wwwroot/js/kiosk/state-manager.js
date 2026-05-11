@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         EmailInput: () => {
-            $('emailInput').value = '';
+            const input = $('emailInput');
+            if (input) input.value = '';
             $('emailError').textContent = '';
             $('btnSubmitEmail')?.addEventListener('click', async () => {
                 const email = $('emailInput').value.trim();

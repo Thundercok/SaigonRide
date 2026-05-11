@@ -3,9 +3,12 @@
     <h2 class="section-title">Nhập Email</h2>
     <p class="section-subtitle">Chúng tôi sẽ gửi mã OTP tới email của bạn</p>
     <div class="input-group">
-        <input id="emailInput" class="kiosk-input" type="email"
-               placeholder="your@email.com" autocomplete="off" />
-        <p id="emailError" class="error-msg"></p>
+        <!-- NEW -->
+        <div class="email-input-wrap">
+            <input id="emailInput" class="kiosk-input-email" type="email"
+                   placeholder="your@email.com" autocomplete="off" spellcheck="false" />
+        </div>
+        <p class="email-hint">Dùng bàn phím để nhập địa chỉ email đã đăng ký</p>
     </div>
     <button id="btnSubmitEmail" class="action-btn btn-primary" style="margin-top:24px;">
         GỬI MÃ OTP →
