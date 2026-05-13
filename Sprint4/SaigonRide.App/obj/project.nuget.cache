@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "SwDpcFCGV7M=",
+  "dgSpecHash": "Xu4MSllC0Q0=",
   "success": true,
   "projectFilePath": "/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/SaigonRide.App.csproj",
   "expectedPackageFiles": [
@@ -115,6 +115,7 @@
     "/Users/thundercock2/.nuget/packages/nuget.projectmodel/6.12.1/nuget.projectmodel.6.12.1.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/nuget.protocol/6.12.1/nuget.protocol.6.12.1.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/nuget.versioning/6.12.1/nuget.versioning.6.12.1.nupkg.sha512",
+    "/Users/thundercock2/.nuget/packages/otp.net/1.4.1/otp.net.1.4.1.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.bundle_e_sqlite3/2.1.11/sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.core/2.1.11/sqlitepclraw.core.2.1.11.nupkg.sha512",
     "/Users/thundercock2/.nuget/packages/sqlitepclraw.lib.e_sqlite3/2.1.11/sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",

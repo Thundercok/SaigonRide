@@ -16,5 +16,9 @@ namespace SaigonRide.App.Models.Entities
         // Navigation property: A user can have many rental records
         public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
         public virtual RideCard? RideCard { get; set; }
+        
+        public string? TotpSecret { get; set; }
+        public bool TotpEnabled { get; set; } = false;
+
     }
 }

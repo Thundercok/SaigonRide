@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SaigonRide.App.Hubs;
 [Authorize(Roles = "Admin")]   // ← add this

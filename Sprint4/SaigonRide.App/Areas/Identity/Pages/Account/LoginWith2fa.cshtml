@@ -1,0 +1,23 @@
+@page
+@model LoginWith2faModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>Your account is protected with an authenticator app. Enter your authenticator code below.</p>
+
+<form method="post">
+    <input type="hidden" asp-for="RememberMe" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div>
+        <label asp-for="Input.TwoFactorCode"></label>
+        <input asp-for="Input.TwoFactorCode" autocomplete="one-time-code" id="twoFactorCode" inputmode="numeric" />
+        <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
+    </div>
+    <button type="submit">Log in</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

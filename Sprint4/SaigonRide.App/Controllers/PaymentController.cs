@@ -190,6 +190,7 @@ namespace SaigonRide.App.Controllers
             await RentalHub.NotifyRentalStatusChanged(
                 _rentalHub,
                 rental.Id,
+                rental.UserId,           // add this
                 rental.Status.ToString(),
                 vehicleCode,
                 dockId);
