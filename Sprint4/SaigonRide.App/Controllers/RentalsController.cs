@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
+using SaigonRide.App.Hubs;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Models.ViewModels;
 using SaigonRide.App.Services;
@@ -18,12 +20,21 @@ namespace SaigonRide.App.Controllers
         private readonly AppDbContext _context;
         private readonly SepayService _sepayService;
         private readonly IWebHostEnvironment _env;
+        private readonly IHubContext<RentalHub> _rentalHub;
+        private readonly IHubContext<AdminHub> _adminHub;
 
-        public RentalsController(AppDbContext context, SepayService sepayService, IWebHostEnvironment env)
+        public RentalsController(
+            AppDbContext context,
+            SepayService sepayService,
+            IWebHostEnvironment env,
+            IHubContext<RentalHub> rentalHub,
+            IHubContext<AdminHub> adminHub)
         {
             _context = context;
             _sepayService = sepayService;
             _env = env;
+            _rentalHub = rentalHub;
+            _adminHub = adminHub;
         }
 
         // ─── START RENTAL ──────────────────────────────────────────────────────────
@@ -202,6 +213,7 @@ namespace SaigonRide.App.Controllers
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                await NotifyRentalStatusChanged(rental);
 
                 return Ok(new
                 {
@@ -269,6 +281,7 @@ namespace SaigonRide.App.Controllers
             }
 
             await _context.SaveChangesAsync();
+            await NotifyRentalStatusChanged(rental);
             return Ok(new { Message = "Rental cancelled." });
         }
 
@@ -299,7 +312,24 @@ namespace SaigonRide.App.Controllers
             if (openRentals.Count > 0)
             {
                 await _context.SaveChangesAsync();
+                foreach (var rental in openRentals)
+                {
+                    await NotifyRentalStatusChanged(rental);
+                }
             }
+        }
+
+        private async Task NotifyRentalStatusChanged(Rental rental)
+        {
+            var vehicleCode = rental.Vehicle?.LicensePlate ?? rental.Vehicle?.Name;
+            var dockId = "Dock" + rental.StartStationId.ToString();
+
+            await RentalHub.NotifyRentalStatusChanged(
+                _rentalHub,
+                rental.Id,
+                rental.Status.ToString(),
+                vehicleCode,
+                dockId);
         }
     }
 }

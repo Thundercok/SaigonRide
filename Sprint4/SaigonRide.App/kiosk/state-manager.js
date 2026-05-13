@@ -151,6 +151,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         Success: ({ vehicleId, dockId } = {}) => {
             if ($('assignedVehicleId')) $('assignedVehicleId').textContent = vehicleId ?? 'N/A';
             if ($('assignedDockId'))    $('assignedDockId').textContent    = dockId    ?? 'N/A';
+
+            // 🎉 Confetti burst
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ['#2A5C43','#5ddb8a','#ffffff','#1a3a2a'] });
+                setTimeout(() => confetti({ particleCount: 60, angle: 60,  spread: 55, origin: { x: 0 } }), 300);
+                setTimeout(() => confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1 } }), 500);
+            }
+
             setTimeout(() => goToState('Splash'), 30000);
             $('btnDone')?.addEventListener('click', () => goToState('Splash'), { once: true });
         },

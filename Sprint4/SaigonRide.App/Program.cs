@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SaigonRide.App.Data;
+using SaigonRide.App.Hubs;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
 using SaigonRide.App.Settings;
@@ -44,6 +45,17 @@ builder.Services.AddAuthentication()
             IssuerSigningKey         = new SymmetricSecurityKey(
                                            Encoding.UTF8.GetBytes(jwt["Key"]!))
         };
+        opt.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                var token = ctx.Request.Query["access_token"];
+                var path  = ctx.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(token) && path.StartsWithSegments("/hubs"))
+                    ctx.Token = token;
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -64,6 +76,7 @@ builder.Services.AddHostedService<StationUtilisationWorker>();
 // ── MVC ───────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -93,5 +106,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapHub<RentalHub>("/hubs/rental");
+app.MapHub<AdminHub>("/hubs/admin");
 
 app.Run();

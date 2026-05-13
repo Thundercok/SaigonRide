@@ -1,9 +1,11 @@
 using System.Security.Claims; 
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
 using SaigonRide.App.Helpers;
+using SaigonRide.App.Hubs;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Models.ViewModels;
 
@@ -15,11 +17,19 @@ namespace SaigonRide.App.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IHubContext<RentalHub> _rentalHub;
+        private readonly IHubContext<AdminHub> _adminHub;
 
-        public PaymentController(AppDbContext context, IConfiguration config)
+        public PaymentController(
+            AppDbContext context,
+            IConfiguration config,
+            IHubContext<RentalHub> rentalHub,
+            IHubContext<AdminHub> adminHub)
         {
             _context = context;
             _config = config;
+            _rentalHub = rentalHub;
+            _adminHub = adminHub;
         }
 
         // ─── SEPAY WEBHOOK ────────────────────────────────────────────────────────
@@ -42,6 +52,7 @@ namespace SaigonRide.App.Controllers
             var rental = await _context.Rentals
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
+                .Include(r => r.StartStation)
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
 
             if (rental == null)
@@ -66,6 +77,7 @@ namespace SaigonRide.App.Controllers
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                await NotifyRentalActivated(rental);
 
                 return Ok(new { success = true, message = "Payment confirmed. Rental is now active.", rentalId });
             }
@@ -109,6 +121,7 @@ namespace SaigonRide.App.Controllers
             var rental = await _context.Rentals
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
+                .Include(r => r.StartStation)
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
 
             if (rental == null || rental.Status != RentalStatus.Pending)
@@ -129,6 +142,7 @@ namespace SaigonRide.App.Controllers
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                await NotifyRentalActivated(rental);
 
                 return Redirect($"/Rentals/Detail/{rentalId}?payment=success");
             }
@@ -166,6 +180,37 @@ namespace SaigonRide.App.Controllers
 
             var expected = "Apikey " + _config["Sepay:WebhookSecret"];
             return authHeader.ToString() == expected;
+        }
+
+        private async Task NotifyRentalActivated(Rental rental)
+        {
+            var vehicleCode = rental.Vehicle?.LicensePlate ?? rental.Vehicle?.Name ?? "Unknown";
+            var dockId = "Dock" + rental.StartStationId.ToString();
+
+            await RentalHub.NotifyRentalStatusChanged(
+                _rentalHub,
+                rental.Id,
+                rental.Status.ToString(),
+                vehicleCode,
+                dockId);
+
+            await AdminHub.NotifyNewActiveRental(_adminHub, new
+            {
+                rentalId = rental.Id,
+                vehicleCode,
+                stationName = rental.StartStation.Name,
+                startTime = rental.StartTime
+            });
+
+            var availableBikes = await _context.Vehicles
+                .CountAsync(v => v.StationId == rental.StartStationId && v.Status == VehicleStatus.Available);
+
+            await AdminHub.NotifyStationUpdate(_adminHub, new
+            {
+                stationId = rental.StartStationId,
+                availableBikes,
+                capacity = rental.StartStation.Capacity
+            });
         }
     }
 }

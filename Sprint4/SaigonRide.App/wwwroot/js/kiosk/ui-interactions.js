@@ -8,6 +8,7 @@ const KioskState = {
     otpEmail:          null,
     currentState:      null,
     selectedVehicleId: null,
+    signalRConnection: null,
 };
 
 const $   = id => document.getElementById(id);
@@ -30,6 +31,24 @@ function startCountdown(seconds) {
 }
 
 function startPolling(rentalId) {
+    (async () => {
+        try {
+            KioskState.signalRConnection = await KioskSignalR.connect();
+            await KioskSignalR.joinRental(rentalId);
+            KioskSignalR.onStatusChanged(data => {
+                if (data.status === 'Active') {
+                    stopAll();
+                    goToState('Success', { vehicleId: data.vehicleCode, dockId: data.dockId });
+                } else if (data.status === 'Cancelled') {
+                    stopAll();
+                    goToState('Error', { message: 'Giao dịch đã bị hủy.' });
+                }
+            });
+        } catch {
+            KioskState.signalRConnection = null;
+        }
+    })();
+
     pollingInterval = setInterval(async () => {
         try {
             const data = await ApiClient.getRentalStatus(rentalId, KioskState.userToken);
@@ -65,6 +84,16 @@ function pollReturnStatus(rentalId) {
 }
 
 function stopAll() {
+    const rentalId = KioskState.currentRentalId;
+    if (KioskState.signalRConnection && window.KioskSignalR) {
+        KioskSignalR.leaveRental(rentalId)
+            .catch(() => {})
+            .finally(() => {
+                KioskSignalR.disconnect().catch(() => {});
+            });
+        KioskState.signalRConnection = null;
+    }
+
     clearInterval(timerInterval);
     clearInterval(pollingInterval);
     timerInterval = pollingInterval = null;

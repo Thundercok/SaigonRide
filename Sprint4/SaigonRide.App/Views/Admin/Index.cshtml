@@ -31,6 +31,11 @@ ViewData["Title"] = "Admin Command Center";
 
     .util-bar-wrap { background: #eee; border-radius: 4px; height: 8px; width: 100%; }
     .util-bar      { background: #2A5C43; border-radius: 4px; height: 8px; transition: width .3s; }
+    .flash-green   { animation: flash-green 1.6s ease-out; }
+    @@keyframes flash-green {
+        0%   { background: #d4edda; }
+        100% { background: #fff; }
+    }
 </style>
 
 <div class="admin-wrap">
@@ -90,17 +95,17 @@ ViewData["Title"] = "Admin Command Center";
         @foreach (var s in ViewBag.Stations)
         {
         var pct = s.Capacity > 0 ? (int)((double)s.AvailableBikes / s.Capacity * 100) : 0;
-        <tr>
+        <tr data-station-id="@s.Id">
             <td>@s.Id</td>
             <td><strong>@s.Name</strong></td>
-            <td>@s.AvailableBikes</td>
+            <td class="station-available">@s.AvailableBikes</td>
             <td>@s.Capacity</td>
             <td style="width:120px;">
                 <div class="util-bar-wrap">
                     <div class="util-bar" style="width:@pct%"></div>
                 </div>
             </td>
-            <td>
+            <td class="station-status">
                 @if (s.AvailableBikes == 0)          { <span style="color:#c0392b;font-weight:700;">Empty</span> }
                 else if (s.AvailableBikes == s.Capacity) { <span style="color:#856404;font-weight:700;">Full</span> }
                 else                                  { <span style="color:#2A5C43;font-weight:700;">Optimal</span> }
@@ -116,7 +121,7 @@ ViewData["Title"] = "Admin Command Center";
         <thead>
         <tr><th>ID</th><th>User</th><th>Vehicle</th><th>Started</th><th>Station</th><th>Actions</th></tr>
         </thead>
-        <tbody>
+        <tbody id="liveRentalsBody">
         @foreach (var r in ViewBag.ActiveRentals)
         {
         <tr id="rental-row-@r.Id">
@@ -136,6 +141,7 @@ ViewData["Title"] = "Admin Command Center";
 
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
 <script>
     // ── Rebalancing table ─────────────────────────────────────────────────────────
     (async () => {
@@ -214,5 +220,70 @@ ViewData["Title"] = "Admin Command Center";
         if (res.ok) document.getElementById(`rental-row-${id}`)?.remove();
         else alert('Failed.');
     }
+
+    // ── Admin SignalR updates ────────────────────────────────────────────────────
+    (() => {
+        if (!window.signalR) return;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/admin')
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on('NewActiveRental', rental => {
+            const tbody = document.getElementById('liveRentalsBody');
+            if (!tbody) return;
+
+            const id = rental.rentalId ?? rental.RentalId;
+            if (document.getElementById(`rental-row-${id}`)) return;
+
+            const started = rental.startTime
+                ? new Date(rental.startTime).toLocaleTimeString('vi-VN', { hour12: false })
+                : '';
+
+            const row = document.createElement('tr');
+            row.id = `rental-row-${id}`;
+            row.className = 'flash-green';
+            row.innerHTML = `
+                <td>#${id}</td>
+                <td>Realtime</td>
+                <td>${rental.vehicleCode ?? ''}</td>
+                <td>${started}</td>
+                <td>${rental.stationName ?? ''}</td>
+                <td>
+                    <button class="btn-sm btn-danger" onclick="forceEndRental(${id})">Force End</button>
+                </td>
+            `;
+
+            tbody.prepend(row);
+        });
+
+        connection.on('StationUpdated', station => {
+            const stationId = station.stationId ?? station.StationId;
+            const available = station.availableBikes ?? station.AvailableBikes;
+            const capacity = station.capacity ?? station.Capacity;
+            const row = document.querySelector(`tr[data-station-id="${stationId}"]`);
+            if (!row) return;
+
+            row.querySelector('.station-available').textContent = available;
+            const pct = capacity > 0 ? Math.round((available / capacity) * 100) : 0;
+            row.querySelector('.util-bar').style.width = `${pct}%`;
+
+            const status = row.querySelector('.station-status');
+            if (available === 0) {
+                status.innerHTML = '<span style="color:#c0392b;font-weight:700;">Empty</span>';
+            } else if (available === capacity) {
+                status.innerHTML = '<span style="color:#856404;font-weight:700;">Full</span>';
+            } else {
+                status.innerHTML = '<span style="color:#2A5C43;font-weight:700;">Optimal</span>';
+            }
+
+            row.classList.remove('flash-green');
+            void row.offsetWidth;
+            row.classList.add('flash-green');
+        });
+
+        connection.start().catch(() => {});
+    })();
 </script>
 }

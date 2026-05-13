@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2A5C43" />
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #fafafa; color: #111; margin: 0; }
@@ -92,6 +94,7 @@
             <a asp-controller="Dashboard" asp-action="Index" class="sg-nav-link">Dashboard</a>
             <a asp-controller="Wallet"    asp-action="Index" class="sg-nav-link">💳 Wallet</a>
             <a asp-controller="Kiosk"     asp-action="Index" class="sg-nav-link">Kiosk</a>
+            <a asp-controller="Stations" asp-action="Index" class="sg-nav-link">🗺 Stations</a>
             @if (User.IsInRole("Admin"))
             {
                 <a asp-controller="Admin" asp-action="Index" class="sg-nav-link">⚙️ Admin</a>

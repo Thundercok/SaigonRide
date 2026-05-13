@@ -237,7 +237,51 @@
         </div>
     </div>
 </section>
+<!-- LIVE MAP -->
+<section style="padding: 0 40px 80px; background: #fff;">
+    <div style="max-width:1200px;margin:0 auto;">
+        <div class="section-label">Network</div>
+        <h2 class="section-title" style="margin-bottom:24px;">8 stations across District 1</h2>
+        <div id="homeMap" style="height:420px;border-radius:16px;border:1px solid #e0e0e0;"></div>
+        <div style="text-align:center;margin-top:16px;">
+            <a asp-controller="Stations" asp-action="Index"
+               style="font-size:14px;font-weight:700;color:#2A5C43;text-decoration:none;">
+                View all stations with live availability →
+            </a>
+        </div>
+    </div>
+</section>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(async () => {
+    const map = L.map('homeMap', { zoomControl: false, scrollWheelZoom: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
+
+    const res  = await fetch('/api/stations');
+    const data = await res.json();
+    const bounds = [];
+
+    data.forEach(s => {
+        const color = s.available === 0 ? '#c0392b' : s.available < s.capacity * 0.3 ? '#e67e22' : '#2A5C43';
+        const icon  = L.divIcon({
+            className: '',
+            html: `<div style="background:${color};color:#fff;font-weight:800;font-size:11px;
+                   padding:5px 9px;border-radius:16px;box-shadow:0 2px 6px rgba(0,0,0,.2);
+                   border:2px solid #fff;font-family:'Inter',sans-serif;white-space:nowrap;">
+                   ${s.available} 🚲</div>`,
+            iconAnchor: [28, 10]
+        });
+        L.marker([s.latitude, s.longitude], { icon })
+         .addTo(map)
+         .bindPopup(`<b>${s.name}</b><br>${s.available}/${s.capacity} available`);
+        bounds.push([s.latitude, s.longitude]);
+    });
+
+    if (bounds.length) map.fitBounds(bounds, { padding: [50, 50] });
+})();
+</script>
 <!-- CTA -->
 <section class="cta-section">
     <h2 class="cta-title">Ready to ride Saigon?</h2>

@@ -122,6 +122,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Mb2dpblBhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Stations/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU3RhdGlvbnMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Wallet/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvV2FsbGV0L0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
