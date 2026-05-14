@@ -11,7 +11,24 @@ public static class DbSeeder
         var db          = services.GetRequiredService<AppDbContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
+// ── TOTP test user (for Playwright 2FA tests) ─────────────────────────────
+        var totpUser = await userManager.FindByEmailAsync("totp_test@saigonride.com");
+        if (totpUser == null)
+        {
+            totpUser = new ApplicationUser
+            {
+                UserName       = "totp_test@saigonride.com",
+                Email          = "totp_test@saigonride.com",
+                FullName       = "TOTP Test User",
+                PhoneNumber    = "0909999999",
+                EmailConfirmed = true,
+                CreatedAt      = DateTime.UtcNow,
+                TotpSecret     = "JBSWY3DPEHPK3PXP",
+                TotpEnabled    = true
+            };
+            var result = await userManager.CreateAsync(totpUser, "Test@1234567!");
+            if (result.Succeeded) await userManager.AddToRoleAsync(totpUser, "User");
+        }
         await db.Database.MigrateAsync();
 
         // ── Roles ────────────────────────────────────────────────────────────
@@ -110,6 +127,7 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
     }
+    
 
     private static async Task EnsureUser(
         UserManager<ApplicationUser> um,
