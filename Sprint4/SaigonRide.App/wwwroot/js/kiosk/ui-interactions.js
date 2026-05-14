@@ -9,6 +9,7 @@ const KioskState = {
     currentState:      null,
     selectedVehicleId: null,
     signalRConnection: null,
+    pendingToken:      null,
 };
 
 const $   = id => document.getElementById(id);
