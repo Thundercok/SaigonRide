@@ -35,8 +35,24 @@
         ⬅ QUAY LẠI
     </button>
 </div>
-
-<!-- ══ 4. AUTH SUCCESS ════════════════════════════════════════════ -->
+<!-- ══ 4. TOTP INPUT ═══════════════════════════════════════════════ -->
+<div id="paymentState_TotpInput" class="state-container" style="display:none;">
+    <h2 class="section-title">Xác Thực 2 Lớp</h2>
+    <p class="section-subtitle">Nhập mã 6 chữ số từ ứng dụng Authenticator</p>
+    <div class="input-group">
+        <input id="totpKioskInput" class="kiosk-input kiosk-input--otp" type="text"
+               placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" />
+        <p id="totpKioskError" class="error-msg"></p>
+    </div>
+    <partial name="_Numpad" model='"totpKioskInput"' />
+    <button id="btnSubmitTotp" class="action-btn btn-primary" style="margin-top:24px;">
+        XÁC NHẬN →
+    </button>
+    <button class="action-btn btn-secondary" data-back-to="Splash" style="margin-top:12px;">
+        ⬅ HỦY & QUAY LẠI
+    </button>
+</div>
+<!-- ══ 5. AUTH SUCCESS ════════════════════════════════════════════ -->
 <div id="paymentState_AuthSuccess" class="state-container" style="display:none;">
     <div class="success-icon-wrapper">
         <svg class="success-svg" viewBox="0 0 52 52">

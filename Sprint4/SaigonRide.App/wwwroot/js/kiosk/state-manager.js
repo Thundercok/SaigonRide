@@ -51,8 +51,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const { ok, data } = await ApiClient.verifyOtp(KioskState.otpEmail, otp);
                     if (ok) {
-                        KioskState.userToken = data.token;
-                        goToState('AuthSuccess', { userName: data.userName });
+                        if (data.requiresTotp) {
+                            KioskState.pendingToken = data.pendingToken;
+                            goToState('TotpInput');
+                        } else {
+                            KioskState.userToken = data.token;
+                            goToState('AuthSuccess', { userName: data.userName });
+                        }
                     } else {
                         $('otpError').textContent = data.message || 'Mã OTP sai. Thử lại.';
                     }
@@ -61,7 +66,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }, { once: true });
         },
-
+        TotpInput: () => {
+            $('totpKioskInput').value = '';
+            $('totpKioskError').textContent = '';
+            $('btnSubmitTotp')?.addEventListener('click', async () => {
+                const code = $('totpKioskInput').value.trim();
+                try {
+                    const res  = await fetch('/api/auth/totp/verify', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({ pendingToken: KioskState.pendingToken, code })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        KioskState.userToken = data.token;
+                        goToState('AuthSuccess', { userName: data.userName });
+                    } else {
+                        $('totpKioskError').textContent = data.message || 'Mã không đúng. Thử lại.';
+                    }
+                } catch {
+                    $('totpKioskError').textContent = 'Lỗi kết nối.';
+                }
+            }, { once: true });
+        },
         AuthSuccess: ({ userName } = {}) => {
             if ($('authUserName')) $('authUserName').textContent = userName ?? '';
             setTimeout(() => goToState('VehicleSelect'), 2000);

@@ -13,6 +13,7 @@
         <!-- FIXED: Updated to 8.0.1 to satisfy JwtBearer dependency -->
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-*" />
         <PackageReference Include="Otp.NET" Version="1.4.1" />
+        <PackageReference Include="QRCoder" Version="1.8.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
 
         <!-- Core Packages -->

@@ -118,6 +118,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvS2lvc2svX1ZlaGljbGVJbmZvUGFuZWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Security/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2VjdXJpdHkvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Security/Setup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2VjdXJpdHkvU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

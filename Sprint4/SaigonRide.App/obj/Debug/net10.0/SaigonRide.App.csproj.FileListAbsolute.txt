@@ -466,3 +466,9 @@
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/34kic7dlyz-{0}-a39ckpyprj-a39ckpyprj.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/obj/Debug/net10.0/compressed/yruq2ggddc-{0}-ngo9my857i-ngo9my857i.gz
 /Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Otp.NET.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/Microsoft.Win32.SystemEvents.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/QRCoder.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/System.Drawing.Common.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/runtimes/unix/lib/net6.0/System.Drawing.Common.dll
+/Users/thundercock2/Documents/Github/SaigonRide/Sprint4/SaigonRide.App/bin/Debug/net10.0/runtimes/win/lib/net6.0/System.Drawing.Common.dll

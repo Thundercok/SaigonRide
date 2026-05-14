@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
+using OtpNet;
+using QRCoder;
 
 namespace SaigonRide.App.Controllers
 {
@@ -64,6 +66,13 @@ namespace SaigonRide.App.Controllers
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
             if (!result.Succeeded)
                 return Unauthorized(new { Message = "Invalid email or password." });
+
+            if (user.TotpEnabled)
+            {
+                var pendingToken = Guid.NewGuid().ToString("N");
+                _cache.Set($"totp_pending:{pendingToken}", user.Id, TimeSpan.FromMinutes(5));
+                return Ok(new { requiresTotp = true, pendingToken });
+            }
 
             return Ok(new
             {
@@ -155,7 +164,71 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
 
     return Ok(new { token = GenerateJwt(user, hours: 2), userName = user.FullName });
 }
+[HttpPost("totp/setup")]
+[Authorize]
+public async Task<IActionResult> TotpSetup()
+{
+    var user = await _userManager.GetUserAsync(User);
+    if (user == null) return Unauthorized();
 
+    // Generate new secret every time setup is called (re-enrollment)
+    var secret = Base32Encoding.ToString(OtpNet.KeyGeneration.GenerateRandomKey(20));
+    
+    user.TotpSecret = secret;
+    await _userManager.UpdateAsync(user);
+
+    var issuer  = "SaigonRide";
+    var account = user.Email ?? user.UserName ?? "user";
+    var uri     = $"otpauth://totp/{Uri.EscapeDataString(issuer)}:{Uri.EscapeDataString(account)}?secret={secret}&issuer={Uri.EscapeDataString(issuer)}&algorithm=SHA1&digits=6&period=30";
+
+    using var qrGenerator  = new QRCodeGenerator();
+    using var qrData       = qrGenerator.CreateQrCode(uri, QRCodeGenerator.ECCLevel.Q);
+    using var qrCode = new PngByteQRCode(qrData);
+    var pngBytes     = qrCode.GetGraphic(5);
+    var base64       = Convert.ToBase64String(pngBytes);
+    return Ok(new { qrDataUrl = $"data:image/png;base64,{base64}", secret });
+}
+
+[HttpPost("totp/enable")]
+[Authorize]
+public async Task<IActionResult> TotpEnable([FromBody] TotpEnableRequest request)
+{
+    var user = await _userManager.GetUserAsync(User);
+    if (user == null) return Unauthorized();
+    if (string.IsNullOrEmpty(user.TotpSecret))
+        return BadRequest(new { message = "Run setup first." });
+
+    if (!VerifyTotpCode(user.TotpSecret, request.Code))
+        return BadRequest(new { message = "Invalid code." });
+
+    user.TotpEnabled = true;
+    await _userManager.UpdateAsync(user);
+    return Ok(new { message = "TOTP enabled." });
+}
+
+[HttpPost("totp/verify")]
+[AllowAnonymous]
+public async Task<IActionResult> TotpVerify([FromBody] TotpVerifyRequest request)
+{
+    if (!_cache.TryGetValue($"totp_pending:{request.PendingToken}", out string? userId))
+        return Unauthorized(new { message = "Invalid or expired session." });
+
+    var user = await _userManager.FindByIdAsync(userId!);
+    if (user == null) return Unauthorized();
+
+    if (!VerifyTotpCode(user.TotpSecret!, request.Code))
+        return Unauthorized(new { message = "Invalid TOTP code." });
+
+    _cache.Remove($"totp_pending:{request.PendingToken}");
+    return Ok(new { token = GenerateJwt(user, hours: 2), userName = user.FullName });
+}
+
+private bool VerifyTotpCode(string secret, string code)
+{
+    var secretBytes = Base32Encoding.ToBytes(secret);
+    var totp        = new OtpNet.Totp(secretBytes);
+    return totp.VerifyTotp(code, out _, new OtpNet.VerificationWindow(previous: 1, future: 1));
+}
         // ── Shared JWT factory ────────────────────────────────────────────────
         private string GenerateJwt(ApplicationUser user, int hours)
         {
@@ -182,6 +255,8 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
             
         }
 // NEW
+        public record TotpEnableRequest(string Code);
+        public record TotpVerifyRequest(string PendingToken, string Code);
         public record SendOtpRequest(string Email);
         public record VerifyOtpRequest(string Email, string Otp);
     }
