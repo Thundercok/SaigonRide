@@ -1,8 +1,12 @@
 #nullable disable
+
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Caching.Memory;
+using OtpNet;
 using SaigonRide.App.Models.Entities;
 
 namespace SaigonRide.Areas.Identity.Pages.Account
@@ -10,54 +14,79 @@ namespace SaigonRide.Areas.Identity.Pages.Account
     public class LoginWith2faModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser>  _userManager;
+        private readonly IMemoryCache                  _cache;
 
-        public LoginWith2faModel(SignInManager<ApplicationUser> signInManager)
+        public LoginWith2faModel(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser>   userManager,
+            IMemoryCache                   cache)
         {
             _signInManager = signInManager;
+            _userManager   = userManager;
+            _cache         = cache;
         }
 
         [BindProperty]
         public InputModel Input { get; set; }
 
-        public bool RememberMe { get; set; }
-        public string ReturnUrl { get; set; }
+        public string ReturnUrl  { get; set; }
+        public bool   RememberMe { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string PendingToken { get; set; }
 
         public class InputModel
         {
             [Required]
-            [StringLength(7, MinimumLength = 6)]
-            [DataType(DataType.Text)]
+            [StringLength(6, MinimumLength = 6)]
             [Display(Name = "Authenticator code")]
-            public string TwoFactorCode { get; set; }
+            public string TotpCode { get; set; }
         }
 
-        public async Task<IActionResult> OnGetAsync(bool rememberMe, string returnUrl = null)
+        public IActionResult OnGet(string pendingToken, string returnUrl = null, bool rememberMe = false)
         {
-            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
-            if (user == null) return RedirectToPage("./Login");
-            ReturnUrl = returnUrl;
-            RememberMe = rememberMe;
+            if (!_cache.TryGetValue($"totp_web:{pendingToken}", out string _))
+                return RedirectToPage("./Login");
+
+            PendingToken = pendingToken;
+            ReturnUrl    = returnUrl ?? Url.Content("~/");
+            RememberMe   = rememberMe;
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(bool rememberMe, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null, bool rememberMe = false)
         {
+            returnUrl ??= Url.Content("~/");
+
             if (!ModelState.IsValid) return Page();
 
-            var code = Input.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
-
-            var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(code, rememberMe, false);
-
-            if (result.Succeeded)
+            if (!_cache.TryGetValue($"totp_web:{PendingToken}", out string email))
             {
-                var destination = string.IsNullOrEmpty(returnUrl) || returnUrl == "/" ? "/Dashboard" : returnUrl;
-                return LocalRedirect(destination);
+                ModelState.AddModelError(string.Empty, "Session expired. Please log in again.");
+                return RedirectToPage("./Login");
             }
-            if (result.IsLockedOut)
-                return RedirectToPage("./Lockout");
 
-            ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
-            return Page();
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return RedirectToPage("./Login");
+
+            var secretBytes = Base32Encoding.ToBytes(user.TotpSecret);
+            var totp        = new Totp(secretBytes);
+            var valid       = totp.VerifyTotp(
+                Input.TotpCode, out _,
+                new VerificationWindow(previous: 1, future: 1));
+
+            if (!valid)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
+                return Page();
+            }
+
+            _cache.Remove($"totp_web:{PendingToken}");
+            await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+
+            var destination = string.IsNullOrEmpty(returnUrl) || returnUrl == "/" ? "/Dashboard" : returnUrl;
+            return LocalRedirect(destination);
         }
     }
 }
