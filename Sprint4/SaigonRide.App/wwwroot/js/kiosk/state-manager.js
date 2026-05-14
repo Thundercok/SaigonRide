@@ -24,21 +24,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         EmailInput: () => {
             const input = $('emailInput');
-            if (input) input.value = '';
+            if ($('emailError')) $('emailError').textContent = '';
             $('emailError').textContent = '';
             $('btnSubmitEmail')?.addEventListener('click', async () => {
                 const email = $('emailInput').value.trim();
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    $('emailError').textContent = 'Email không hợp lệ.';
+                    if ($('emailError')) $('emailError').textContent = 'Email không hợp lệ.';
                     return;
                 }
                 KioskState.otpEmail = email;
                 try {
                     const { ok, data } = await ApiClient.sendOtp(email);
-                    if (!ok) { $('emailError').textContent = data.message || 'Không thể gửi OTP.'; return; }
+                    if ($('emailError')) $('emailError').textContent = data.message || 'Không thể gửi OTP.';
                     goToState('OtpInput');
                 } catch {
-                    $('emailError').textContent = 'Không thể gửi OTP. Thử lại.';
+                    if ($('emailError')) $('emailError').textContent = 'Không thể gửi OTP. Thử lại.';
                 }
             }, { once: true });
         },
