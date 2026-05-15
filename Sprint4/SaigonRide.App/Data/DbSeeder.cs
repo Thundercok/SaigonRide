@@ -11,7 +11,54 @@ public static class DbSeeder
         var db          = services.GetRequiredService<AppDbContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-// ── TOTP test user (for Playwright 2FA tests) ─────────────────────────────
+
+        // ── 1. Apply Migrations ──────────────────────────────────────────────
+        // MUST execute first to ensure tables exist before Identity tries to query/insert.
+        await db.Database.MigrateAsync();
+
+        // ── 2. Roles ─────────────────────────────────────────────────────────
+        foreach (var role in new[] { "Admin", "User" })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+
+        // ── 3. Admin user ────────────────────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
+        {
+            UserName       = "admin@saigonride.com",
+            Email          = "admin@saigonride.com",
+            FullName       = "Admin",
+            PhoneNumber    = "0900000000",
+            EmailConfirmed = true,
+            CreatedAt      = DateTime.UtcNow
+        }, "Admin@SaigonRide99!", "Admin");
+
+        // ── 4. Kiosk service account ─────────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
+        {
+            UserName       = "kiosk@saigonride.com",
+            Email          = "kiosk@saigonride.com",
+            FullName       = "Kiosk",
+            PhoneNumber    = "0900000001",
+            EmailConfirmed = true,
+            CreatedAt      = DateTime.UtcNow
+        }, "Kiosk@Internal99!", "User");
+
+        // ── 5. Test user (for Playwright) ────────────────────────────────────
+        await EnsureUser(userManager, new ApplicationUser
+        {
+            UserName       = "test@saigonride.com",
+            Email          = "test@saigonride.com",
+            FullName       = "Test User",
+            PhoneNumber    = "0901234567",
+            EmailConfirmed = true,
+            CreatedAt      = DateTime.UtcNow
+        }, "Test@SaigonRide99!", "User");
+
+        // ── 6. TOTP test user (for Playwright 2FA tests) ─────────────────────
         var totpUser = await userManager.FindByEmailAsync("totp_test@saigonride.com");
         if (totpUser == null)
         {
@@ -27,49 +74,13 @@ public static class DbSeeder
                 TotpEnabled    = true
             };
             var result = await userManager.CreateAsync(totpUser, "Test@1234567!");
-            if (result.Succeeded) await userManager.AddToRoleAsync(totpUser, "User");
+            if (result.Succeeded) 
+            {
+                await userManager.AddToRoleAsync(totpUser, "User");
+            }
         }
-        await db.Database.MigrateAsync();
 
-        // ── Roles ────────────────────────────────────────────────────────────
-        foreach (var role in new[] { "Admin", "User" })
-            if (!await roleManager.RoleExistsAsync(role))
-                await roleManager.CreateAsync(new IdentityRole(role));
-
-        // ── Admin user ───────────────────────────────────────────────────────
-        await EnsureUser(userManager, new ApplicationUser
-        {
-            UserName    = "admin@saigonride.com",
-            Email       = "admin@saigonride.com",
-            FullName    = "Admin",
-            PhoneNumber = "0900000000",
-            EmailConfirmed = true,
-            CreatedAt   = DateTime.UtcNow
-        }, "Admin@SaigonRide99!", "Admin");
-
-        // ── Kiosk service account ─────────────────────────────────────────────
-        await EnsureUser(userManager, new ApplicationUser
-        {
-            UserName    = "kiosk@saigonride.com",
-            Email       = "kiosk@saigonride.com",
-            FullName    = "Kiosk",
-            PhoneNumber = "0900000001",
-            EmailConfirmed = true,
-            CreatedAt   = DateTime.UtcNow
-        }, "Kiosk@Internal99!", "User");
-
-        // ── Test user (for Playwright) ────────────────────────────────────────
-        await EnsureUser(userManager, new ApplicationUser
-        {
-            UserName    = "test@saigonride.com",
-            Email       = "test@saigonride.com",
-            FullName    = "Test User",
-            PhoneNumber = "0901234567",
-            EmailConfirmed = true,
-            CreatedAt   = DateTime.UtcNow
-        }, "Test@SaigonRide99!", "User");
-
-        // ── Stations ──────────────────────────────────────────────────────────
+        // ── 7. Stations ──────────────────────────────────────────────────────
         if (!await db.Stations.AnyAsync())
         {
             var stations = new List<Station>
@@ -87,11 +98,10 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
 
-        // ── Vehicles ──────────────────────────────────────────────────────────
+        // ── 8. Vehicles ──────────────────────────────────────────────────────
         if (!await db.Vehicles.AnyAsync())
         {
             var stations = await db.Stations.ToListAsync();
-            var rng      = new Random(42);
             var vehicles = new List<Vehicle>();
 
             var specs = new[]
@@ -127,7 +137,6 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
     }
-    
 
     private static async Task EnsureUser(
         UserManager<ApplicationUser> um,
@@ -137,6 +146,9 @@ public static class DbSeeder
     {
         if (await um.FindByEmailAsync(user.Email!) != null) return;
         var result = await um.CreateAsync(user, password);
-        if (result.Succeeded) await um.AddToRoleAsync(user, role);
+        if (result.Succeeded)
+        {
+            await um.AddToRoleAsync(user, role);
+        }
     }
 }
