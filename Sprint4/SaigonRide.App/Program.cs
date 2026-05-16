@@ -73,6 +73,9 @@ builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<RideService>();
 builder.Services.AddHostedService<PendingRentalTimeoutWorker>();
 builder.Services.AddHostedService<StationUtilisationWorker>();
+builder.Services.AddScoped<IPaymentStrategy, VietQRPaymentStrategy>();
+builder.Services.AddScoped<IPaymentStrategy, StripePaymentStrategy>();
+builder.Services.AddScoped<PaymentStrategyFactory>();
 
 // ── MVC ───────────────────────────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
