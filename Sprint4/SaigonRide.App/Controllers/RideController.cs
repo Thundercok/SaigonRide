@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SaigonRide.App.Models.ViewModels;
 using SaigonRide.App.Services;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+    
 namespace SaigonRide.App.Controllers;
 
 [ApiController]

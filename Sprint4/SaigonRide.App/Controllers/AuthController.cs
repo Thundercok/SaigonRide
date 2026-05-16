@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using OtpNet;
 using QRCoder;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace SaigonRide.App.Controllers
 {
