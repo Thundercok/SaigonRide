@@ -82,7 +82,6 @@ public class MobileFlowTests : PageTest
         Assert.That(page.Url, Does.Contain("Login").IgnoreCase);
         await context.CloseAsync();
     }
-
     private async Task LoginAsync()
     {
         await Page.GotoAsync($"{BaseUrl}/Identity/Account/Login");
@@ -90,5 +89,8 @@ public class MobileFlowTests : PageTest
         await Page.FillAsync("#Input_Password", "Test@SaigonRide99!");
         await Page.ClickAsync("button[type='submit']");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // If still on login page, dump current URL for debugging
+        if (Page.Url.Contains("Login"))
+            Assert.Fail($"Login failed, still at: {Page.Url}");
     }
 }
