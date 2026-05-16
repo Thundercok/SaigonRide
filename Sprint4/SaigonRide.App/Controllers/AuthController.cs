@@ -12,9 +12,11 @@ using Microsoft.EntityFrameworkCore;
 using OtpNet;
 using QRCoder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using SaigonRide.App.Data;
 
 namespace SaigonRide.App.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -143,6 +145,7 @@ public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
     return Ok(new { message = "OTP đã được gửi." });
 }
 
+
 [HttpPost("verify-otp")]
 [AllowAnonymous]
 public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
@@ -266,6 +269,34 @@ private bool VerifyTotpCode(string secret, string code)
             
         }
 // NEW
+        [HttpPost("test/cleanup")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestCleanup()
+        {
+            var bypass = _config["TestSettings:OtpBypass"];
+            if (string.IsNullOrEmpty(bypass)) return Forbid();
+
+            var db = HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var testUser = await _userManager.FindByEmailAsync("test@saigonride.com");
+            if (testUser == null) return NotFound();
+
+            var activeRentals = await db.Rentals
+                .Include(r => r.Vehicle)
+                .Where(r => r.UserId == testUser.Id && (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending))
+                .ToListAsync();
+
+            foreach (var rental in activeRentals)
+            {
+                rental.Status = RentalStatus.Cancelled;
+                if (rental.Vehicle != null)
+                {
+                    rental.Vehicle.Status = VehicleStatus.Available;
+                    rental.Vehicle.StationId = 2;
+                }
+            }
+            await db.SaveChangesAsync();
+            return Ok(new { cancelled = activeRentals.Count });
+        }
         public record TotpEnableRequest(string Code);
         public record TotpVerifyRequest(string PendingToken, string Code);
         public record SendOtpRequest(string Email);

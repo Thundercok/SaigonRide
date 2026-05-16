@@ -247,4 +247,9 @@ public class KioskFlowTests : PageTest
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         Assert.That(Page.Url, Does.Contain("Login").IgnoreCase);
     }
+    [TearDown]
+    public async Task Cleanup()
+    {
+        await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup");
+    }
 }

@@ -23,6 +23,7 @@ namespace SaigonRide.App.Controllers
         private readonly IHubContext<RentalHub> _rentalHub;
         private readonly IHubContext<AdminHub> _adminHub;
 
+        
         public RentalsController(
             AppDbContext context,
             SepayService sepayService,
