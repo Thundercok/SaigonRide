@@ -130,7 +130,7 @@ async function handleStripeCheckout() {
 
     let rentalStarted = false;
     try {
-        const { ok: startOk, data: startData } = await ApiClient.startRental(KioskState.selectedVehicleId, KioskState.userToken);
+        const { ok: startOk, data: startData } = await ApiClient.startRental(KioskState.selectedVehicleId, KioskState.userToken, 'Stripe');
         if (!startOk) {
             goToState('Error', { message: startData.message ?? startData.Message ?? 'Không thể tạo thuê xe.' });
             return;

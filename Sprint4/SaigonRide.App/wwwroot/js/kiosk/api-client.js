@@ -44,12 +44,12 @@ const ApiClient = {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
     },
-
-    async startRental(vehicleId, token) {
-        const res = await fetch('/api/rentals/start', {
+    async startRental(vehicleId, token, paymentMethod = 'VietQR') {
+        const stationId = parseInt(document.getElementById('kioskRoot')?.dataset.stationId ?? '2');
+        const res = await fetch('/api/ride/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ vehicleId, mode: 0 })
+            body: JSON.stringify({ vehicleId, stationId, paymentMethod })
         });
         return { ok: res.ok, data: await res.json() };
     },
