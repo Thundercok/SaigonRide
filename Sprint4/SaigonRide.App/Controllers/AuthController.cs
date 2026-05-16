@@ -169,13 +169,7 @@ public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
     var user = await _userManager.FindByEmailAsync(request.Email);
     if (user == null) return Unauthorized();
 
-    if (user.TotpEnabled)
-    {
-        var pendingToken = Guid.NewGuid().ToString("N");
-        _cache.Set($"totp_pending:{pendingToken}", user.Id, TimeSpan.FromMinutes(5));
-        return Ok(new { requiresTotp = true, pendingToken });
-    }
-
+// Remove the TotpEnabled block entirely
     return Ok(new { token = GenerateJwt(user, hours: 2), userName = user.FullName });
 }
 [HttpPost("totp/setup")]
