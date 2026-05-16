@@ -79,7 +79,20 @@ public static class DbSeeder
                 await userManager.AddToRoleAsync(totpUser, "User");
             }
         }
-
+// ── Test user RideCard ────────────────────────────────────────────────────
+        var testUser = await userManager.FindByEmailAsync("test@saigonride.com");
+        if (testUser != null && !await db.RideCards.AnyAsync(r => r.UserId == testUser.Id))
+        {
+            db.RideCards.Add(new RideCard
+            {
+                UserId    = testUser.Id,
+                Balance   = 500000,
+                Currency  = "VND",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
         // ── 7. Stations ──────────────────────────────────────────────────────
         if (!await db.Stations.AnyAsync())
         {
@@ -150,5 +163,7 @@ public static class DbSeeder
         {
             await um.AddToRoleAsync(user, role);
         }
+
     }
+    
 }

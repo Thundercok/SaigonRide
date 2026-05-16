@@ -9,7 +9,7 @@ namespace SaigonRide.App.Controllers;
 
 [ApiController]
 [Route("api/ride")]
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class RideController : ControllerBase
 {
     private readonly RideService _rideService;
