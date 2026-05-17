@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SaigonRide.App.Data;
 using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Models.ViewModels;
+using SaigonRide.App.Services.Payments;
 
 namespace SaigonRide.App.Services;
 
@@ -12,26 +13,31 @@ public class RideService
 
     private readonly AppDbContext _db;
     private readonly WalletService _walletService;
+    private readonly PaymentStrategyFactory _paymentFactory;
 
-    public RideService(AppDbContext db, WalletService walletService)
+    public RideService(AppDbContext db, WalletService walletService, PaymentStrategyFactory paymentFactory)
     {
         _db = db;
         _walletService = walletService;
+        _paymentFactory = paymentFactory;
     }
 
-    public async Task<RideStartResponse> StartRideAsync(string userId, RideStartRequest request, CancellationToken cancellationToken = default)
+    public async Task<RideStartResponse> StartRideAsync(string userId, RideStartRequest request,
+        CancellationToken cancellationToken = default)
     {
         var rideCard = await _walletService.GetOrCreateRideCardAsync(userId, cancellationToken);
         if (rideCard.Balance < MinimumStartBalance)
             throw new InvalidOperationException("Insufficient Funds");
 
         var hasActiveRental = await _db.Rentals.AnyAsync(r =>
-            r.UserId == userId && (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending), cancellationToken);
+                r.UserId == userId && (r.Status == RentalStatus.Active || r.Status == RentalStatus.Pending),
+            cancellationToken);
 
         if (hasActiveRental)
             throw new InvalidOperationException("You already have an active rental.");
 
-        var station = await _db.Stations.FirstOrDefaultAsync(s => s.Id == request.StationId && s.IsActive, cancellationToken);
+        var station =
+            await _db.Stations.FirstOrDefaultAsync(s => s.Id == request.StationId && s.IsActive, cancellationToken);
         if (station == null)
             throw new InvalidOperationException("Station is not available.");
 
@@ -62,6 +68,16 @@ public class RideService
         _db.Rentals.Add(rental);
         await _db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        
+        var depositAmount = PricingEngine.CalculateDepositAmount(vehicle.MarketValue, (int)vehicle.Grade);
+        var strategy = _paymentFactory.Resolve(request.PaymentMethod ?? "VietQR");
+        var paymentResult = await strategy.InitiateAsync(new PaymentContext(
+            RentalId: rental.Id,
+            Amount: depositAmount,
+            UserId: userId,
+            BaseUrl: "",
+            UserToken: ""
+        ));
 
         return new RideStartResponse
         {
@@ -70,7 +86,19 @@ public class RideService
             StartStationId = station.Id,
             StartTime = now,
             WalletBalance = rideCard.Balance
+            // Map QrUrl and RedirectUrl here if exposed by paymentResult
         };
+    }
+
+    public class RideStartResponse
+    {
+        public int RentalId { get; set; }
+        public int VehicleId { get; set; }
+        public int StartStationId { get; set; }
+        public DateTime StartTime { get; set; }
+        public decimal WalletBalance { get; set; }
+        public string? QrUrl { get; set; }
+        public string? RedirectUrl { get; set; }
     }
 
     public async Task<RideStopResponse> StopRideAsync(string userId, RideStopRequest request, CancellationToken cancellationToken = default)

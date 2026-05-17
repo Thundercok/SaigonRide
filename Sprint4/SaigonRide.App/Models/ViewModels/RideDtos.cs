@@ -7,6 +7,7 @@ public class RideStartRequest
     public int StationId { get; set; }
     public int VehicleId { get; set; }
     public RentalMode Mode { get; set; } = RentalMode.Hourly;
+    public string? PaymentMethod { get; set; }
 }
 
 public class RideStartResponse
