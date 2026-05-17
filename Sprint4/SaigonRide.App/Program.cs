@@ -9,6 +9,7 @@ using SaigonRide.App.Models.Entities;
 using SaigonRide.App.Services;
 using SaigonRide.App.Settings;
 using Stripe;
+using SaigonRide.App.Services.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
