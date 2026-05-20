@@ -203,9 +203,8 @@ public class KioskFlowTests : PageTest
         await Page.EvaluateAsync("() => window.goToState('Error', { message: 'Test error' })");
         await WaitForState("Error");
         await Expect(Page.Locator("#errorMessage")).ToHaveTextAsync("Test error");
-        await WaitForState("Splash", ms: 15000); // just state, not kioskReady
+        await WaitForState("Splash", ms: 15000);
     }
-
     [Test]
     public async Task Kiosk_Back_Button_Returns_To_Splash()
     {
