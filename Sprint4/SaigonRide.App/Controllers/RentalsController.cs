@@ -230,6 +230,24 @@ namespace SaigonRide.App.Controllers
                 return StatusCode(500, new { Message = "Error processing return." });
             }
         }
+        [HttpPost("return")]
+        public async Task<IActionResult> ReturnByBikeCode([FromBody] ReturnByCodeRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var vehicle = await _context.Vehicles
+                .FirstOrDefaultAsync(v => v.LicensePlate == request.BikeCode || v.Name == request.BikeCode);
+            if (vehicle == null)
+                return NotFound(new { message = "Vehicle not found." });
+
+            var rental = await _context.Rentals
+                .Include(r => r.Vehicle)
+                .FirstOrDefaultAsync(r => r.VehicleId == vehicle.Id && r.Status == RentalStatus.Active);
+            if (rental == null)
+                return NotFound(new { message = "No active rental found for this vehicle." });
+
+            return await ProcessReturnInternal(rental);        }
 
         // ─── RENTAL HISTORY ───────────────────────────────────────────────────────
         [HttpGet("history")]
@@ -334,4 +352,5 @@ namespace SaigonRide.App.Controllers
                 dockId);
         }   
     }
+    public record ReturnByCodeRequest(string BikeCode, int EndStationId = 2);
 }
