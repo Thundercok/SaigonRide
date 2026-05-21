@@ -173,7 +173,7 @@ namespace SaigonRide.App.Controllers
                 .Include(r => r.Deposit)
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
 
-            if (rental == null || rental.UserId != userId)
+            if (rental == null)
                 return NotFound(new { Message = "Rental record not found." });
 
             if (rental.Status != RentalStatus.Active)
@@ -247,7 +247,8 @@ namespace SaigonRide.App.Controllers
             if (rental == null)
                 return NotFound(new { message = "No active rental found for this vehicle." });
 
-            return await ProcessReturnInternal(rental);        }
+            return await ReturnRental(rental.Id);            
+        }
 
         // ─── RENTAL HISTORY ───────────────────────────────────────────────────────
         [HttpGet("history")]
