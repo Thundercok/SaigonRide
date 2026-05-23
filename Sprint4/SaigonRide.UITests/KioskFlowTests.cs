@@ -244,6 +244,47 @@ public class KioskFlowTests : PageTest
         Assert.That(page.Url, Does.Contain("Login").IgnoreCase);
         await context.CloseAsync();
     } 
+    [Test]
+    public async Task Kiosk_Return_Flow_Shows_Receipt()
+    {
+        // Seed an active rental via API
+        var tokenRes = await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/verify-otp",
+            new APIRequestContextOptions
+            {
+                DataObject = new { email = TestEmail, otp = TestOtp }
+            });
+        var tokenData = await tokenRes.JsonAsync();
+        var token = tokenData?.GetProperty("token").GetString();
+
+        var startRes = await Page.APIRequest.PostAsync($"{BaseUrl}/api/ride/start",
+            new APIRequestContextOptions
+            {
+                Headers = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" },
+                DataObject = new { vehicleId = 10, stationId = 2, paymentMethod = "VietQR" }
+            });
+        var startData = await startRes.JsonAsync();
+        var vehicleId = startData?.GetProperty("vehicleId").GetInt32();
+
+        // Get license plate
+        var plateRes = await Page.APIRequest.GetAsync($"{BaseUrl}/api/vehicles",
+            new APIRequestContextOptions
+            {
+                Headers = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" }
+            });
+
+        // Navigate kiosk to ReturnScan
+        await Page.GotoAsync($"{BaseUrl}/Kiosk");
+        await WaitForSplash();
+        await Page.ClickAsync("#btnGoToReturn");
+        await WaitForState("ReturnScan");
+
+        // Type bike code via numpad — SGR-0001 won't work on numpad, use JS inject
+        await Page.EvaluateAsync("() => { document.getElementById('bikeIdInput').value = 'SGR-0001'; }");
+        await Page.ClickAsync("#btnSubmitReturn");
+        await WaitForState("ReturnProcessing");
+        await WaitForState("ReturnReceipt", ms: 15000);
+        await Expect(Page.Locator("#receiptFinalFare")).ToBeVisibleAsync();
+    }
     
     [TearDown]
     public async Task Cleanup()
@@ -251,4 +292,5 @@ public class KioskFlowTests : PageTest
         try { await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup"); }
         catch { }
     }
+    
 }
