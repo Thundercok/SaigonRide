@@ -1,4 +1,4 @@
-using Microsoft.Playwright;
+cleausing Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 [Parallelizable(ParallelScope.None)]
 [TestFixture]
