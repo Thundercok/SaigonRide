@@ -70,7 +70,7 @@ function pollReturnStatus(rentalId) {
     const interval = setInterval(async () => {
         attempts++;
         try {
-            const data = await ApiClient.getReturnStatus(rentalId, KioskState.userToken);
+            const data = await ApiClient.getReturnStatus(rentalId, KioskState.kioskToken);           
             if (!data) return;
             if (data.status === 'Completed') {
                 clearInterval(interval);

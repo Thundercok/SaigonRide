@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const bikeCode = $('bikeIdInput').value.trim();
                 if (!bikeCode) { $('returnError').textContent = 'Nhập mã xe.'; return; }
                 try {
-                    const { ok, data } = await ApiClient.returnRental(bikeCode, KioskState.userToken);
+                    const { ok, data } = await ApiClient.returnRental(bikeCode, KioskState.kioskToken);
                     if (ok) goToState('ReturnProcessing', { rentalId: data.rentalId });
                     else $('returnError').textContent = data.message || 'Không tìm thấy xe.';
                 } catch {
