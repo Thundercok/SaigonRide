@@ -1,7 +1,7 @@
-cleausing Microsoft.Playwright;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
-[Parallelizable(ParallelScope.None)];
-[TestFixture];
+[Parallelizable(ParallelScope.None)]
+[TestFixture]
 
 public class KioskFlowTests : PageTest
 {
