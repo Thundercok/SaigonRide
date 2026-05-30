@@ -1,4 +1,4 @@
-﻿using SaigonRide.App.Services;
+using SaigonRide.App.Services;
 using FluentAssertions;
 
 namespace SaigonRide.Tests;
@@ -40,5 +40,53 @@ public class PricingEngineTests
     {
         var deposit = PricingEngine.CalculateDepositAmount(2_000_000m, grade: 0);
         deposit.Should().Be(200_000m);
+    }
+
+    [Fact]
+    public void Fare_ZeroMinutes_BillsMinimumOneHour()
+    {
+        var fare = PricingEngine.CalculateHourlyFare(20000m, Base, Base);
+        fare.Should().Be(20000m);
+    }
+
+    [Fact]
+    public void Fare_ExactlyOneHour_BillsOneHour()
+    {
+        var fare = PricingEngine.CalculateHourlyFare(20000m, Base, Base.AddHours(1));
+        fare.Should().Be(20000m);
+    }
+
+    [Fact]
+    public void Fare_OneHourOneMinute_BillsTwoHours()
+    {
+        var fare = PricingEngine.CalculateHourlyFare(20000m, Base, Base.AddHours(1).AddMinutes(1));
+        fare.Should().Be(40000m);
+    }
+
+    [Fact]
+    public void Discount_StationBelow20Percent_Applies15Percent()
+    {
+        // Station with 20 capacity, 3 vehicles = 15% utilization = qualifies
+        var fare        = 100000m;
+        var discounted  = PricingEngine.ApplyLowInventoryDiscount(fare, currentCount: 3, capacity: 20);
+        discounted.Should().Be(85000m);
+    }
+
+    [Fact]
+    public void Discount_StationAbove20Percent_NoDiscount()
+    {
+        // Station with 20 capacity, 5 vehicles = 25% utilization = no discount
+        var fare        = 100000m;
+        var discounted  = PricingEngine.ApplyLowInventoryDiscount(fare, currentCount: 5, capacity: 20);
+        discounted.Should().Be(100000m);
+    }
+
+    [Fact]
+    public void Discount_StationExactly20Percent_NoDiscount()
+    {
+        // Boundary: exactly 20% = no discount
+        var fare        = 100000m;
+        var discounted  = PricingEngine.ApplyLowInventoryDiscount(fare, currentCount: 4, capacity: 20);
+        discounted.Should().Be(100000m);
     }
 }

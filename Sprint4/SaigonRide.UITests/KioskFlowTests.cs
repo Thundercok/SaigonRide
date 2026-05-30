@@ -18,7 +18,12 @@ public class KioskFlowTests : PageTest
         ?? "123456";
 
     public override BrowserNewContextOptions ContextOptions() =>
-        new() { ViewportSize = new ViewportSize { Width = 1280, Height = 720 } };
+        new()
+        {
+            ViewportSize      = new ViewportSize { Width = 1280, Height = 720 },
+            RecordVideoDir    = "videos/",
+            RecordVideoSize   = new RecordVideoSize { Width = 1280, Height = 720 }
+        };
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -256,14 +261,33 @@ public class KioskFlowTests : PageTest
         // Cleanup first
         await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup");
 
+        // Dynamically find an available vehicle at station 2
+        var vehRes = await Page.APIRequest.GetAsync($"{BaseUrl}/api/vehicles?stationId=2",
+            new APIRequestContextOptions { Headers = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" } });
+        
+        if (!vehRes.Ok)
+            Assert.Fail($"Failed to fetch vehicles. Status: {vehRes.Status}");
+
+        var vehicles = await vehRes.JsonAsync();
+        if (vehicles == null || vehicles.Value.GetArrayLength() == 0)
+            Assert.Fail("No available vehicles at station 2 on staging/production to start the return test.");
+
+        var firstVehicle = vehicles.Value[0];
+        var vehicleId = firstVehicle.GetProperty("id").GetInt32();
+        var licensePlate = firstVehicle.GetProperty("licensePlate").GetString();
+
         var startRes = await Page.APIRequest.PostAsync($"{BaseUrl}/api/ride/start",
             new APIRequestContextOptions
             {
                 Headers    = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" },
-                DataObject = new { vehicleId = 10, stationId = 2, paymentMethod = "VietQR" }
+                DataObject = new { vehicleId = vehicleId, stationId = 2, paymentMethod = "VietQR" }
             });
 
-        if (!startRes.Ok) Assert.Fail("Could not start rental for return test.");
+        if (!startRes.Ok)
+        {
+            var content = await startRes.TextAsync();
+            Assert.Fail($"Could not start rental for return test. Status: {startRes.Status}, Body: {content}");
+        }
 
         // Navigate kiosk to ReturnScan
         await Page.GotoAsync($"{BaseUrl}/Kiosk");
@@ -271,7 +295,7 @@ public class KioskFlowTests : PageTest
         await Page.ClickAsync("#btnGoToReturn");
         await WaitForState("ReturnScan");
 
-        await Page.EvaluateAsync("() => { document.getElementById('bikeIdInput').value = 'SGR-0001'; }");
+        await Page.EvaluateAsync($"() => {{ document.getElementById('bikeIdInput').value = '{licensePlate}'; }}");
         await Page.ClickAsync("#btnSubmitReturn");
         await WaitForState("ReturnProcessing");
         await WaitForState("ReturnReceipt", ms: 15000);
@@ -279,10 +303,18 @@ public class KioskFlowTests : PageTest
     }
     
     [TearDown]
-    public async Task Cleanup()
+    public async Task TearDown()
     {
+        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+        {
+            var dir = "screenshots";
+            Directory.CreateDirectory(dir);
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"{dir}/{TestContext.CurrentContext.Test.Name}_{DateTime.Now:HHmmss}.png"
+            });
+        }
         try { await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup"); }
         catch { }
     }
-    
 }

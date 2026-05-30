@@ -161,6 +161,43 @@ namespace SaigonRide.App.Controllers
                 dockId = rental.dockId
             });
         }
+
+        [HttpGet("{id}/return-status")]
+        public async Task<IActionResult> GetReturnStatus(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var rental = await _context.Rentals
+                .Include(r => r.Vehicle)
+                .Include(r => r.Deposit)
+                .Where(r => r.Id == id && r.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (rental == null) return NotFound();
+
+            if (rental.Status != RentalStatus.Completed)
+            {
+                return Ok(new { status = rental.Status.ToString() });
+            }
+
+            decimal baseFare = rental.TotalCost;
+            decimal discount = 0;
+            decimal finalFare = rental.TotalCost;
+            string depositNote = rental.Deposit?.Status == DepositStatus.Refunded 
+                ? $"Hoàn cọc: {rental.Deposit.Amount:N0} VNĐ" 
+                : "Không có cọc hoàn trả";
+
+            return Ok(new {
+                status = "Completed",
+                summary = new {
+                    baseFare = baseFare,
+                    discount = discount,
+                    finalFare = finalFare,
+                    depositNote = depositNote
+                }
+            });
+        }
         // ─── RETURN RENTAL ────────────────────────────────────────────────────────
         [HttpPost("return/{rentalId}")]
         public async Task<IActionResult> ReturnRental(int rentalId)
@@ -218,6 +255,8 @@ namespace SaigonRide.App.Controllers
 
                 return Ok(new
                 {
+                    rentalId = rental.Id,
+                    RentalId = rental.Id,
                     Message = "Vehicle returned successfully!",
                     Duration = $"{duration.Hours}h {duration.Minutes}m",
                     FinalCost = totalCost,

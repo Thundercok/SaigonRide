@@ -19,4 +19,10 @@ public static class PricingEngine
         var rate = grade switch { 2 => 0.20m, 1 => 0.15m, _ => 0.10m };
         return Math.Round(marketValue * rate, 0);
     }
+
+    public static decimal ApplyLowInventoryDiscount(decimal fare, int currentCount, int capacity)
+    {
+        var utilization = (decimal)currentCount / capacity;
+        return utilization < 0.20m ? fare * 0.85m : fare;
+    }
 }

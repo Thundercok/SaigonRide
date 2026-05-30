@@ -1,4 +1,4 @@
-﻿using Microsoft.Playwright;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 using OtpNet;
@@ -28,6 +28,19 @@ public class TotpFlowTests : PageTest
 
     public override BrowserNewContextOptions ContextOptions() =>
         new() { ViewportSize = new ViewportSize { Width = 1280, Height = 720 } };
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+        {
+            Directory.CreateDirectory("screenshots");
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"screenshots/{TestContext.CurrentContext.Test.Name}_{DateTime.Now:HHmmss}.png"
+            });
+        }
+    }
 
     private string GenerateTotp()
     {

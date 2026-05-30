@@ -15,12 +15,30 @@ public class MobileFlowTests : PageTest
     public override BrowserNewContextOptions ContextOptions() =>
         new()
         {
-            ViewportSize     = new ViewportSize { Width = 390, Height = 844 }, // iPhone 14
-            UserAgent        = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-            IsMobile         = true,
-            HasTouch         = true,
+            ViewportSize      = new ViewportSize { Width = 390, Height = 844 },
+            UserAgent         = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+            IsMobile          = true,
+            HasTouch          = true,
             DeviceScaleFactor = 3,
+            RecordVideoDir    = "videos/",
+            RecordVideoSize   = new RecordVideoSize { Width = 390, Height = 844 }
         };
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+        {
+            var dir = "screenshots";
+            Directory.CreateDirectory(dir);
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"{dir}/{TestContext.CurrentContext.Test.Name}_{DateTime.Now:HHmmss}.png"
+            });
+        }
+        try { await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup"); }
+        catch { }
+    }
 
     [Test]
     public async Task Mobile_Home_Loads()

@@ -15,6 +15,19 @@ public class AdminFlowTests : PageTest
     public override BrowserNewContextOptions ContextOptions() =>
         new() { ViewportSize = new ViewportSize { Width = 1280, Height = 720 } };
 
+    [TearDown]
+    public async Task TearDown()
+    {
+        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+        {
+            Directory.CreateDirectory("screenshots");
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = $"screenshots/{TestContext.CurrentContext.Test.Name}_{DateTime.Now:HHmmss}.png"
+            });
+        }
+    }
+
     private async Task LoginAsAdmin()
     {
         await Page.GotoAsync($"{BaseUrl}/Identity/Account/Login");
