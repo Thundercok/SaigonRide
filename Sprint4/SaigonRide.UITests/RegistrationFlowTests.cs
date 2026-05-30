@@ -10,7 +10,7 @@ public class RegistrationFlowTests : PageTest
 {
     private static readonly string BaseUrl =
         Environment.GetEnvironmentVariable("SAIGONRIDE_BASE_URL")
-        ?? "https://saigonride-production-0749.up.railway.app";
+        ?? "http://localhost:5297";
 
     public override BrowserNewContextOptions ContextOptions() =>
         new()

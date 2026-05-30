@@ -168,11 +168,20 @@ namespace SaigonRide.App.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var rental = await _context.Rentals
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var isKioskOrAdmin = User.IsInRole("Admin") || email == "kiosk@saigonride.com";
+
+            var query = _context.Rentals
                 .Include(r => r.Vehicle)
                 .Include(r => r.Deposit)
-                .Where(r => r.Id == id && r.UserId == userId)
-                .FirstOrDefaultAsync();
+                .Where(r => r.Id == id);
+
+            if (!isKioskOrAdmin)
+            {
+                query = query.Where(r => r.UserId == userId);
+            }
+
+            var rental = await query.FirstOrDefaultAsync();
 
             if (rental == null) return NotFound();
 
@@ -256,7 +265,6 @@ namespace SaigonRide.App.Controllers
                 return Ok(new
                 {
                     rentalId = rental.Id,
-                    RentalId = rental.Id,
                     Message = "Vehicle returned successfully!",
                     Duration = $"{duration.Hours}h {duration.Minutes}m",
                     FinalCost = totalCost,

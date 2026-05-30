@@ -10,7 +10,7 @@ public class WalletFlowTests : PageTest
 {
     private static readonly string BaseUrl =
         Environment.GetEnvironmentVariable("SAIGONRIDE_BASE_URL")
-        ?? "https://saigonride-production-0749.up.railway.app";
+        ?? "http://localhost:5297";
 
     public override BrowserNewContextOptions ContextOptions() =>
         new()
@@ -67,7 +67,7 @@ public class WalletFlowTests : PageTest
         await LoginAsync();
         await Page.GotoAsync($"{BaseUrl}/Wallet");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        var topUpBtn = Page.Locator("a[href*='TopUp'], button:has-text('Top Up'), a:has-text('Top Up')").First;
+        var topUpBtn = Page.Locator("#btnTopup");
         await topUpBtn.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         Assert.That(Page.Url, Does.Contain("Wallet").IgnoreCase);

@@ -16,6 +16,15 @@ public static class DbSeeder
         // MUST execute first to ensure tables exist before Identity tries to query/insert.
         await db.Database.MigrateAsync();
 
+        // Pristine Database Reset for UI Test consistency
+        db.Rentals.RemoveRange(await db.Rentals.ToListAsync());
+        db.Deposits.RemoveRange(await db.Deposits.ToListAsync());
+        db.RideCardTransactions.RemoveRange(await db.RideCardTransactions.ToListAsync());
+        db.Vehicles.RemoveRange(await db.Vehicles.ToListAsync());
+        db.Stations.RemoveRange(await db.Stations.ToListAsync());
+        db.RideCards.RemoveRange(await db.RideCards.ToListAsync());
+        await db.SaveChangesAsync();
+
         // ── 2. Roles ─────────────────────────────────────────────────────────
         foreach (var role in new[] { "Admin", "User" })
         {

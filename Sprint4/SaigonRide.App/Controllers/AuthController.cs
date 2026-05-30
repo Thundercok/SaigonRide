@@ -285,7 +285,7 @@ private bool VerifyTotpCode(string secret, string code)
                 if (rental.Vehicle != null)
                 {
                     rental.Vehicle.Status = VehicleStatus.Available;
-                    rental.Vehicle.StationId = 2;
+                    rental.Vehicle.StationId = rental.StartStationId;
                 }
             }
             await db.SaveChangesAsync();

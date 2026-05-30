@@ -1,5 +1,9 @@
 using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+[assembly: NonParallelizable]
+
 [Parallelizable(ParallelScope.None)]
 [TestFixture]
 
@@ -7,7 +11,7 @@ public class KioskFlowTests : PageTest
 {
     private static readonly string BaseUrl =
         Environment.GetEnvironmentVariable("SAIGONRIDE_BASE_URL")
-        ?? "https://saigonride-production-0749.up.railway.app";
+        ?? "http://localhost:5297";
 
     private static readonly string TestEmail =
         Environment.GetEnvironmentVariable("SAIGONRIDE_TEST_EMAIL")
@@ -261,8 +265,18 @@ public class KioskFlowTests : PageTest
         // Cleanup first
         await Page.APIRequest.PostAsync($"{BaseUrl}/api/auth/test/cleanup");
 
-        // Dynamically find an available vehicle at station 2
-        var vehRes = await Page.APIRequest.GetAsync($"{BaseUrl}/api/vehicles?stationId=2",
+        // Navigate kiosk to retrieve the station ID it is running on
+        await Page.GotoAsync($"{BaseUrl}/Kiosk");
+        await WaitForSplash();
+        var stationIdStr = await Page.Locator("#kioskRoot").GetAttributeAsync("data-station-id");
+        if (string.IsNullOrEmpty(stationIdStr) || !int.TryParse(stationIdStr, out var kioskStationId))
+        {
+            Assert.Fail("Could not retrieve station ID from kiosk UI.");
+            return;
+        }
+
+        // Dynamically find an available vehicle at the kiosk's station
+        var vehRes = await Page.APIRequest.GetAsync($"{BaseUrl}/api/vehicles?stationId={kioskStationId}",
             new APIRequestContextOptions { Headers = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" } });
         
         if (!vehRes.Ok)
@@ -270,7 +284,7 @@ public class KioskFlowTests : PageTest
 
         var vehicles = await vehRes.JsonAsync();
         if (vehicles == null || vehicles.Value.GetArrayLength() == 0)
-            Assert.Fail("No available vehicles at station 2 on staging/production to start the return test.");
+            Assert.Fail($"No available vehicles at station {kioskStationId} to start the return test.");
 
         var firstVehicle = vehicles.Value[0];
         var vehicleId = firstVehicle.GetProperty("id").GetInt32();
@@ -280,7 +294,7 @@ public class KioskFlowTests : PageTest
             new APIRequestContextOptions
             {
                 Headers    = new Dictionary<string, string> { ["Authorization"] = $"Bearer {token}" },
-                DataObject = new { vehicleId = vehicleId, stationId = 2, paymentMethod = "VietQR" }
+                DataObject = new { vehicleId = vehicleId, stationId = kioskStationId, paymentMethod = "VietQR" }
             });
 
         if (!startRes.Ok)
@@ -289,9 +303,6 @@ public class KioskFlowTests : PageTest
             Assert.Fail($"Could not start rental for return test. Status: {startRes.Status}, Body: {content}");
         }
 
-        // Navigate kiosk to ReturnScan
-        await Page.GotoAsync($"{BaseUrl}/Kiosk");
-        await WaitForSplash();
         await Page.ClickAsync("#btnGoToReturn");
         await WaitForState("ReturnScan");
 
